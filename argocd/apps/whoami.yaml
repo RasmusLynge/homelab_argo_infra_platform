@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: whoami
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # Same repo as the root app-of-apps Application (see talos_setup's
+    # gitops_repo_url) — child apps point back at their own subdirectory.
+    repoURL: https://github.com/<you>/argocd-exmpl.git
+    targetRevision: HEAD
+    path: whoami
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: whoami
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,37 @@
+{
+  "name": "homelab_argo_infra_platform",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
+    "ghcr.io/argocd/argo-devcontainer-features/argo-cd:1.0": {},
+    "ghcr.io/argocd/argo-devcontainer-features/argo-rollouts:1.0": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "minikube": "none"
+    }
+  },
+  "mounts": [
+    // Persist Claude Code auth/session across rebuilds.
+    "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
+    // Your host ~/.agents folder, read-write.
+    "source=${localEnv:HOME}/.agents,target=/home/vscode/.agents,type=bind,consistency=cached"
+  ],
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude"
+  },
+  // Claude Code refuses --dangerously-skip-permissions when run as root,
+  // so the base:ubuntu image's non-root "vscode" user is used here.
+  "remoteUser": "vscode",
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "dev.containers.copyGitConfig": false,
+        "git.useIntegratedAskPass": false
+      }
+    }
+  },
+  "remoteEnv": {
+    "GIT_CONFIG_NOSYSTEM": "1"
+  }
+}

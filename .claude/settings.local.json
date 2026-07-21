@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(terraform validate *)",
+      "Bash(terraform fmt *)",
+      "Bash(terraform plan *)",
+      "WebSearch",
+      "WebFetch(domain:docs.hetzner.com)"
+    ]
+  }
+}
