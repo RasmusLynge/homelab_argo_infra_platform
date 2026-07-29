@@ -4,8 +4,6 @@
   "features": {
     "ghcr.io/devcontainers/features/node:1": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
-    "ghcr.io/argocd/argo-devcontainer-features/argo-cd:1.0": {},
-    "ghcr.io/argocd/argo-devcontainer-features/argo-rollouts:1.0": {},
     "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
       "minikube": "none"
     }
@@ -22,7 +20,7 @@
   // Claude Code refuses --dangerously-skip-permissions when run as root,
   // so the base:ubuntu image's non-root "vscode" user is used here.
   "remoteUser": "vscode",
-  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude",
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && sudo chown -R vscode:vscode \"$(npm config get prefix)\"",
   "customizations": {
     "vscode": {
       "settings": {

@@ -5,7 +5,11 @@
       "Bash(terraform fmt *)",
       "Bash(terraform plan *)",
       "WebSearch",
-      "WebFetch(domain:docs.hetzner.com)"
+      "WebFetch(domain:docs.hetzner.com)",
+      "Bash(kubectl config *)",
+      "Bash(kubectl get *)",
+      "WebFetch(domain:cert-manager.io)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }
