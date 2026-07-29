@@ -1,0 +1,8 @@
+# Let the chart manage its own CRDs (ClusterSecretStore, ExternalSecret, ...)
+# through Argo CD rather than applying them out of band. (This is the chart
+# default; set explicitly for clarity.)
+installCRDs: true
+
+# No ClusterSecretStore is configured here — that's wired up to Azure Key Vault
+# separately (see ticket 04 / docs/adr/0006-external-secrets-azure-key-vault.md),
+# once its bootstrap Service Principal credential has been applied to the cluster.

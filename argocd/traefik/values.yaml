@@ -1,0 +1,89 @@
+# See docs/adr/0003-hostnetwork-over-metallb.md and
+# docs/adr/0004-gateway-api-over-traefik-ingressroute.md for the reasoning behind
+# this configuration.
+
+# Bind directly to the node's network namespace instead of a LoadBalancer Service
+# (single node, no MetalLB). The chart's own Service is disabled since hostNetwork
+# already exposes the entrypoints on the node's IP.
+hostNetwork: true
+service:
+  enabled: false
+
+deployment:
+  # Required alongside hostNetwork so the pod can still resolve cluster-internal
+  # DNS names via CoreDNS rather than falling back to the host's resolv.conf.
+  dnsPolicy: ClusterFirstWithHostNet
+  # The image runs as a non-root user, which can't bind to the privileged 80/443
+  # ports entrypoints use. Copy the binary to a writable volume and grant it
+  # CAP_NET_BIND_SERVICE there instead of running the container as root.
+  # (Pattern from the chart's own EXAMPLES.md "Host Network" section.)
+  # NB: this image tag must stay the appVersion of the chart version pinned in
+  # argocd/apps/traefik.yaml (41.0.2 -> v3.7.8) — bump both together.
+  initContainers:
+    - name: copy-binary
+      image: traefik:v3.7.8
+      command: ["cp", "/usr/local/bin/traefik", "/shared/traefik"]
+      volumeMounts:
+        - name: traefik-bin
+          mountPath: /shared
+    - name: setcap
+      image: alpine:3.21
+      command:
+        - sh
+        - -c
+        - apk add --no-cache libcap && setcap cap_net_bind_service=+ep /shared/traefik
+      securityContext:
+        runAsUser: 0
+        runAsNonRoot: false
+      volumeMounts:
+        - name: traefik-bin
+          mountPath: /shared
+  additionalVolumes:
+    - name: traefik-bin
+      emptyDir: {}
+
+additionalVolumeMounts:
+  - name: traefik-bin
+    mountPath: /usr/local/bin
+
+# Pod-level runAsNonRoot stays false (verbatim from the chart's own hostNetwork
+# example) so the setcap initContainer's own runAsUser: 0 override is honored;
+# the main container re-tightens to runAsNonRoot: true below.
+podSecurityContext:
+  runAsGroup: 65532
+  runAsNonRoot: false
+  runAsUser: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  allowPrivilegeEscalation: true
+  capabilities:
+    drop: [ALL]
+    add: [NET_BIND_SERVICE]
+
+# Gateway API only for routing (ADR 0004) — classic Ingress is off, and no
+# IngressRoute objects are ever created. kubernetesCRD stays enabled anyway:
+# it's also what watches Traefik's Middleware CRD, which ADR 0004's ForwardAuth/
+# RateLimit ExtensionRef filters resolve through even when routes are HTTPRoutes.
+providers:
+  kubernetesGateway:
+    enabled: true
+  kubernetesIngress:
+    enabled: false
+  kubernetesCRD:
+    enabled: true
+
+# No classic Ingress resources either, to match (ADR 0004).
+ingressClass:
+  enabled: false
+
+# Only the GatewayClass comes from the chart. The actual Gateway is created once
+# cert-manager has issued the wildcard certificate it needs for TLS termination
+# (see ticket 06 / ADR 0007) — not the chart's own unauthenticated default Gateway.
+gatewayClass:
+  enabled: true
+gateway:
+  enabled: false

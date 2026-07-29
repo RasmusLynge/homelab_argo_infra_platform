@@ -1,0 +1,8 @@
+# Let the chart manage its own CRDs (Certificate, ClusterIssuer, ...) through Argo CD
+# rather than applying them out of band.
+crds:
+  enabled: true
+
+# No ClusterIssuer is configured here — that's wired up separately once External
+# Secrets Operator can hand it the Cloudflare API token (see ticket 05 /
+# docs/adr/0005-cert-manager-dns01-cloudflare.md).
