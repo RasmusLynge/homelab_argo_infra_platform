@@ -8,7 +8,7 @@ spec:
   source:
     # Same repo as the root app-of-apps Application (see talos_setup's
     # gitops_repo_url) — child apps point back at their own subdirectory.
-    repoURL: https://github.com/<you>/argocd-exmpl.git
+    repoURL: https://github.com/RasmusLynge/homelab_argo_infra_platform.git
     targetRevision: HEAD
     path: whoami
   destination:
