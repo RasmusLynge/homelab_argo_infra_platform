@@ -1,1 +1,26 @@
+# infrastructure/external-secrets/values.yaml
 installCRDs: true
+
+replicaCount: 1
+
+webhook:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+
+certController:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 96Mi
+
+serviceMonitor:
+  enabled: false
