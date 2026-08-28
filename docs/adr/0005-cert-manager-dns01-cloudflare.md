@@ -1,3 +1,0 @@
-# TLS via cert-manager + Let's Encrypt DNS-01 on Cloudflare
-
-Ingress is internal-only (LAN, not publicly reachable), but we own a domain, so we use `cert-manager` with a Let's Encrypt `ClusterIssuer` on the **DNS-01** challenge rather than HTTP-01 — this gets real, trusted certificates without ever exposing port 80/443 to the internet. Cloudflare was chosen as the DNS host: it's cheapest for registration (at-cost, no markup) and is a natively built-in cert-manager DNS-01 solver (no community webhook needed). If the domain is registered elsewhere, only its nameservers need to point at Cloudflare — DNS hosting there is free regardless of registrar.
