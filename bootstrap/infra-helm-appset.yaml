@@ -13,7 +13,7 @@ spec:
         repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
         revision: main
         files:
-          - path: infra/*/helm/config.yaml
+          - path: infrastructure/*/helm/config.yaml
   template:
     metadata:
       name: '{{.name}}'
@@ -28,7 +28,7 @@ spec:
           helm:
             releaseName: '{{.name}}'
             valueFiles:
-              - $values/infra/{{.name}}/helm/values.yaml
+              - $values/infrastructure/{{.name}}/helm/values.yaml
         - repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
           targetRevision: main
           ref: values
