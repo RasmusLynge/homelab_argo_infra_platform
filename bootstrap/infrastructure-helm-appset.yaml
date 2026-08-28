@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: infra-helm
+  name: infrastructure-helm
   namespace: argocd
 spec:
   goTemplate: true
@@ -20,7 +20,7 @@ spec:
       annotations:
         argocd.argoproj.io/sync-wave: '{{.syncWave}}'
     spec:
-      project: infra
+      project: infrastructure
       sources:
         - repoURL: '{{.repoURL}}'
           chart: '{{.chart}}'
