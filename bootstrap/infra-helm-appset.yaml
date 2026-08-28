@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: infra-helm
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - git:
+        repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
+        revision: main
+        files:
+          - path: infra/*/helm/config.yaml
+  template:
+    metadata:
+      name: '{{.name}}'
+      annotations:
+        argocd.argoproj.io/sync-wave: '{{.syncWave}}'
+    spec:
+      project: infra
+      sources:
+        - repoURL: '{{.repoURL}}'
+          chart: '{{.chart}}'
+          targetRevision: '{{.targetRevision}}'
+          helm:
+            releaseName: '{{.name}}'
+            valueFiles:
+              - $values/infra/{{.name}}/helm/values.yaml
+        - repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
+          targetRevision: main
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        automated: {prune: true, selfHeal: true}
+        syncOptions: [CreateNamespace=true, ServerSideApply=true]

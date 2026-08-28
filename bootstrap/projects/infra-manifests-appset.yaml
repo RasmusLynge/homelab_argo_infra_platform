@@ -1,20 +1,25 @@
+# bootstrap/infra-manifests-appset.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: monitoring
+  name: infra-manifests
   namespace: argocd
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   generators:
     - git:
         repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
         revision: main
         directories:
-          - path: infrastructure/monitoring/*
+          - path: infra/*/manifests
   template:
     metadata:
-      name: 'monitoring-{{.path.basename}}'
+      name: '{{index .path.segments 1}}-manifests'
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
     spec:
       project: infra
       source:
@@ -23,10 +28,7 @@ spec:
         path: '{{.path.path}}'
       destination:
         server: https://kubernetes.default.svc
-        namespace: monitoring
+        namespace: '{{index .path.segments 1}}'
       syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
+        automated: {prune: true, selfHeal: true}
+        syncOptions: [CreateNamespace=true]
