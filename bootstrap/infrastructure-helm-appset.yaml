@@ -19,6 +19,8 @@ spec:
       name: '{{.name}}'
       annotations:
         argocd.argoproj.io/sync-wave: '{{.syncWave}}'
+      labels:
+        component: '{{.name}}'
     spec:
       project: infrastructure
       sources:

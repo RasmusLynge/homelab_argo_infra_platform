@@ -19,6 +19,8 @@ spec:
       name: '{{index .path.segments 1}}-manifests'
       annotations:
         argocd.argoproj.io/sync-wave: "1"
+      labels:
+        component: '{{.name}}'
     spec:
       project: infrastructure
       source:
