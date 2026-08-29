@@ -38,7 +38,7 @@ spec:
         server: https://kubernetes.default.svc
         namespace: '{{.namespace}}'
       syncPolicy:
-        automated:
-          prune: '{{.prune}}'
-          selfHeal: '{{.selfHeal}}'
+        automated: 
+          prune: true
+          selfHeal: true
         syncOptions: [CreateNamespace=true, ServerSideApply=true]
