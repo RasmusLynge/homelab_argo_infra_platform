@@ -4,5 +4,5 @@ chart: cilium
 repoURL: https://helm.cilium.io/
 targetRevision: v1.20.1
 syncWave: "-5"
-selfHeal: false
-prune: false
+selfHeal: "false"
+prune: "false"
