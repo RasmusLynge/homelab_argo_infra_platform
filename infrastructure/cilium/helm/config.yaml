@@ -1,6 +1,6 @@
 name: cilium
 namespace: kube-system
-chart: cilium/cilium
+chart: cilium
 repoURL: https://helm.cilium.io/
 targetRevision: v1.20.1
 syncWave: "-1"
