@@ -39,6 +39,6 @@ spec:
         namespace: '{{.namespace}}'
       syncPolicy:
         automated:
-          prune: {{.prune}}
-          selfHeal: {{.selfHeal}}
+          prune: '{{.prune}}'
+          selfHeal: '{{.selfHeal}}'
         syncOptions: [CreateNamespace=true, ServerSideApply=true]
