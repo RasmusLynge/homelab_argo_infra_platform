@@ -20,7 +20,7 @@ spec:
       annotations:
         argocd.argoproj.io/sync-wave: "1"
       labels:
-        component: '{{.name}}'
+        component: '{{index .path.segments 1}}'
     spec:
       project: infrastructure
       source:
