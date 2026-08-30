@@ -4,6 +4,6 @@ metadata:
   name: default
 spec:
   interfaces:
-    - ^eth[0-9]+
+    -^enp0s31f6$ # find with talosctl get links --nodes <nodename> #look for real mac address in open state and no kind
   externalIPs: true
   loadBalancerIPs: true
