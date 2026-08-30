@@ -21,6 +21,8 @@ metadata:
 spec:
   parentRefs:
     - name: home
+  hostnames:
+    - "argocd.homelab.local"
   rules:
     - backendRefs:
         - name: argocd-server
