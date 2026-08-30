@@ -11,7 +11,16 @@ spec:
       allowedRoutes:
         namespaces:
           from: Same
----
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: "*.home.lynge.party"
+      tls:
+        certificateRefs:
+          - name: home-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -34,8 +43,8 @@ metadata:
 spec:
   secretName: home-tls
   issuerRef:
-    name: letsencrypt-staging
-    kind: ClusterIssuer
+    name: letsencrypt-prod
+    kind: ClusterIssuer 
   dnsNames:
     - "*.home.lynge.party"
     - "home.lynge.party"
