@@ -1,0 +1,5 @@
+# Will be done with external secret later
+
+#kubectl create secret generic cloudflare-api-token \
+#  -n cert-manager \
+#  --from-literal=api-token='<paste-token>'
