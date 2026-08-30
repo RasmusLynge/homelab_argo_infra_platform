@@ -42,8 +42,8 @@ cgroup:
   hostRoot: /sys/fs/cgroup
 
 gatewayAPI:
-  enabled: false
-l7Proxy: false
+  enabled: true
+l7Proxy: true
 
 
 l2announcements:
