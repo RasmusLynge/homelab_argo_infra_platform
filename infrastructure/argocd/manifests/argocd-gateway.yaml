@@ -30,7 +30,7 @@ spec:
   parentRefs:
     - name: home
   hostnames:
-    - "argocd.home.lynge.party"
+    - "192.168.0.240 argocd.home.lynge.party
   rules:
     - backendRefs:
         - name: argocd-server
