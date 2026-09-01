@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: infrastructure-helm
+  name: infra-helm
   namespace: argocd
 spec:
   goTemplate: true
@@ -13,7 +13,7 @@ spec:
         repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
         revision: main
         files:
-          - path: infrastructure/*/helm/config.yaml
+          - path: infra/*/helm/config.yaml
   template:
     metadata:
       name: '{{.name}}'
@@ -22,7 +22,7 @@ spec:
       labels:
         component: '{{.name}}'
     spec:
-      project: infrastructure
+      project: infra
       sources:
         - repoURL: '{{.repoURL}}'
           chart: '{{.chart}}'
@@ -30,7 +30,7 @@ spec:
           helm:
             releaseName: '{{.name}}'
             valueFiles:
-              - $values/infrastructure/{{.name}}/helm/values.yaml
+              - $values/infra/{{.name}}/helm/values.yaml
         - repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
           targetRevision: main
           ref: values

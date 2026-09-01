@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: infrastructure-manifests
+  name: infra-crds
   namespace: argocd
 spec:
   goTemplate: true
@@ -13,16 +13,16 @@ spec:
         repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
         revision: main
         directories:
-          - path: infrastructure/*/manifests
+          - path: infra/*/crds
   template:
     metadata:
-      name: '{{index .path.segments 1}}-manifests'
+      name: '{{index .path.segments 1}}-crds'
       annotations:
-        argocd.argoproj.io/sync-wave: "1"
+        argocd.argoproj.io/sync-wave: "-10"
       labels:
         component: '{{index .path.segments 1}}'
     spec:
-      project: infrastructure
+      project: infra
       source:
         repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
         targetRevision: main
