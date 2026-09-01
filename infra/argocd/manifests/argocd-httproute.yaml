@@ -5,6 +5,7 @@ metadata:
 spec:
   parentRefs:
     - name: home
+      namespace: gateway
   hostnames:
     - argocd.home.lynge.party
   rules:
