@@ -1,0 +1,6 @@
+name             : prometheus-stack
+namespace        : prometheus-stack
+chart            : prometheus-community
+repoURL       : https://prometheus-community.github.io/helm-charts
+targetRevision          : 88.6.3
+syncWave: "0"

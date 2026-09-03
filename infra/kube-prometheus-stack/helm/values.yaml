@@ -1,0 +1,27 @@
+alertmanager:
+  enabled: false
+
+grafana:
+  enabled: true
+  persistence:
+    enabled: false # using configmaps for dashboards
+  resources:
+    limits: {memory: 256Mi}
+
+# talos specific settings... setting up later
+kubeControllerManager: {enabled: false}
+kubeScheduler: {enabled: false}
+kubeEtcd: {enabled: false}
+kubeProxy: {enabled: false}
+
+prometheus:
+  prometheusSpec:
+    scrapeInterval: 60s
+    evaluationInterval: 60s
+    retention: 10d
+    retentionSize: 8GB
+    resources:
+      requests: {memory: 400Mi}
+      limits: {memory: 1Gi}
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false

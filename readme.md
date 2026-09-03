@@ -1,25 +1,39 @@
 # GitOps project for Talos homelab
+tbd
 
-
-Using app of apps pattern
+## Deployment structure
 
 ```
 bootstrap/
-├── projects/
-│   ├── infra.yaml
-│   └── apps.yaml
-│
-├── infra-crds-appset.yaml
-├── infra-helm-appset.yaml
-├── infra-manifests-appset.yaml
-│
+├── apps/
+│   ├── tbd...
+├── infra/
+│   ├── app-project.yaml
+│   ├── crds-appset.yaml
+│   ├── helm-appset.yaml
+│   └── manifests-appset.yaml
 └── root-app.yaml
 
-infra/                                 # generated apps only, no exceptions
+infra/
 ├── argocd/
+│   ├── crds
+│   │   └── ...yaml
+│   ├── helm
+│   │   ├── config.yaml
+│   │   └── values.yaml
+│   └── manifests
+│       └── ...yaml
 ├── cert-manager/
-└── external-secrets/
+├── external-secrets/
+└── ...
 
 apps/
-└── todo...
+└── tbd...
 ```
+
+
+The cluster is bootstrapped with argocd and the root app `bootstrap/root-app.yaml`. This root app deploys all resources residing in the `bootstrap/` dir. 
+
+The configuration is split into two categories: 
+- infra - for the base infrastructure.
+- apps - for all the apps running on top. 
