@@ -5,8 +5,9 @@ grafana:
   enabled: true
   persistence:
     enabled: false # using configmaps for dashboards
-  #resources:
-  #  limits: {memory: 256Mi}
+  resources:
+    requests: {cpu: 50m, memory: 256Mi}
+    limits: {memory: 768Mi}
   grafana.ini:
     server:
       root_url: https://grafana.home.lynge.party
