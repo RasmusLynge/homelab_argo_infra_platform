@@ -42,3 +42,8 @@ spec:
           prune: true
           selfHeal: true
         syncOptions: [CreateNamespace=true, ServerSideApply=true]
+        managedNamespaceMetadata:
+          labels:
+            pod-security.kubernetes.io/enforce: '{{ if dig "namespaceEnforcePrivileged" false . }}privileged{{ else }}baseline{{ end }}'
+            pod-security.kubernetes.io/audit: baseline
+            pod-security.kubernetes.io/warn: baseline
