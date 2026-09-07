@@ -1,0 +1,54 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: httproute-https-and-hostname
+spec:
+  validationActions:
+    - Deny        # start with Audit, flip to Deny once reports are clean
+  failurePolicy: Fail
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups:   ["gateway.networking.k8s.io"]
+        apiVersions: ["v1", "v1beta1"]
+        operations:  ["CREATE", "UPDATE"]
+        resources:   ["httproutes"]
+  variables:
+    - name: hostnames
+      expression: "object.spec.?hostnames.orValue([])"
+    - name: parents
+      expression: "object.spec.?parentRefs.orValue([])"
+    - name: rules
+      expression: "object.spec.?rules.orValue([])"
+  validations:
+    - expression: "variables.hostnames.size() > 0"
+      message: >-
+        spec.hostnames must be set. An HTTPRoute with no hostname matches
+        every host on the Gateway.
+
+    - expression: "variables.hostnames.all(h, h.endsWith('.home.lynge.party'))"
+      message: >-
+        Every entry in spec.hostnames must be under .home.lynge.party
+        (for example app.home.lynge.party).
+
+    - expression: |
+        variables.parents.all(p,
+          (!has(p.port) || p.port != 80) &&
+          (!has(p.sectionName) || !(p.sectionName in ['http', 'web', 'http-80']))
+        )
+      message: >-
+        HTTPRoutes may not attach to a plaintext listener. Drop port 80 and
+        the http/web sectionName from spec.parentRefs and use the TLS listener.
+
+    - expression: |
+        variables.rules.all(r,
+          r.?filters.orValue([]).all(f,
+            !has(f.requestRedirect) ||
+            !has(f.requestRedirect.scheme) ||
+            f.requestRedirect.scheme == 'https'
+          )
+        )
+      message: >-
+        requestRedirect.scheme must be https.
