@@ -1,0 +1,5 @@
+crds:
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+  customLabels:
+    app.kubernetes.io/part-of: kyverno
