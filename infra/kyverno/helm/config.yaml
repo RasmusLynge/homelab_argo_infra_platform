@@ -4,4 +4,4 @@ chart            : kyverno
 repoURL       : https://kyverno.github.io/kyverno/
 targetRevision          : 3.9.0
 syncWave: "1"
-# namespaceEnforcePrivileged: true
+serverSideDiff: true
