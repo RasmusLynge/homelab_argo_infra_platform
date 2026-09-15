@@ -11,6 +11,31 @@ grafana:
   grafana.ini:
     server:
       root_url: https://grafana.home.lynge.party
+    auth.azuread:
+      enabled: true
+      name: Microsoft
+      allow_sign_up: true
+      scopes: openid email profile
+      auth_url: https://login.microsoftonline.com/$__env{AZURE_TENANT_ID}/oauth2/v2.0/authorize
+      token_url: https://login.microsoftonline.com/$__env{AZURE_TENANT_ID}/oauth2/v2.0/token
+      allowed_organizations: $__env{AZURE_TENANT_ID}
+      use_pkce: true
+      role_attribute_strict: true
+      allow_assign_grafana_admin: true
+      skip_org_role_sync: false
+  envValueFrom:
+    AZURE_TENANT_ID:
+      secretKeyRef:
+        name: grafana-azuread
+        key: tenant-id
+    GF_AUTH_AZUREAD_CLIENT_ID:
+      secretKeyRef:
+        name: grafana-azuread
+        key: client-id
+    GF_AUTH_AZUREAD_CLIENT_SECRET:
+      secretKeyRef:
+        name: grafana-azuread
+        key: client-secret
 
 # talos specific settings... setting up later
 kubeControllerManager: {enabled: false}
