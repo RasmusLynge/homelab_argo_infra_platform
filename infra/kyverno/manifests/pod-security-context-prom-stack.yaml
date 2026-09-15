@@ -1,0 +1,78 @@
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: prom-stack-security
+  namespace: kube-prometheus-stack
+spec:
+  background: true
+  rules:
+    - name: default-securitycontext
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      mutate:
+        patchStrategicMerge:
+          spec:
+            securityContext:
+              +(seccompProfile):
+                type: RuntimeDefault
+            containers:
+              - (name): "*"
+                securityContext:
+                  +(allowPrivilegeEscalation): false
+                  +(capabilities):
+                    drop:
+                      - ALL
+            initContainers:
+              - (name): "*"
+                securityContext:
+                  +(allowPrivilegeEscalation): false
+                  +(capabilities):
+                    drop:
+                      - ALL
+
+    - name: restricted-for-normal-workloads
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: prometheus-node-exporter
+      validate:
+        failureAction: Audit
+        message: >-
+          Workloads in this namespace must meet the restricted Pod Security
+          Standard. node-exporter is handled separately by its own rule.
+        podSecurity:
+          level: restricted
+          version: latest
+
+    - name: baseline-for-node-exporter
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: prometheus-node-exporter
+      validate:
+        failureAction: Audit
+        message: >-
+          node-exporter may use host namespaces and hostPath mounts, but must
+          otherwise meet baseline: no privileged containers, no added
+          capabilities, no privilege escalation.
+        podSecurity:
+          level: baseline
+          version: latest
+          exclude:
+            - controlName: "Host Namespaces"
+            - controlName: "HostPath Volumes"
+            - controlName: "Host Ports"

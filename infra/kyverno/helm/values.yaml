@@ -3,3 +3,9 @@ crds:
     argocd.argoproj.io/sync-options: Replace=true
   customLabels:
     app.kubernetes.io/part-of: kyverno
+grafana:
+  enabled: true
+  grafanaDashboard:
+    create: true
+prometheusRule:
+  enabled: true

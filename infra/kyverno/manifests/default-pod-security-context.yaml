@@ -1,0 +1,33 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-securitycontext
+spec:
+  rules:
+    - name: set-pod-security-context
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - cilium
+                - kube-prometheus-stack
+      mutate:
+        patchStrategicMerge:
+          spec:
+            +(securityContext):
+              runAsNonRoot: true
+              seccompProfile:
+                type: RuntimeDefault
+            containers:
+              - (name): "*"
+                +(securityContext):
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                      - ALL
