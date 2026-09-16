@@ -76,5 +76,5 @@ spec:
             - controlName: "Host Namespaces"
             - controlName: "HostPath Volumes"
             - controlName: "Host Ports"
-          images:
+              images:
                 - "quay.io/prometheus/node-exporter*"
