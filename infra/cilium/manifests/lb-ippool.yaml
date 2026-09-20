@@ -5,4 +5,4 @@ metadata:
 spec:
   blocks:
     - start: "192.168.0.240" # make sure these are free from dhcp and not used by other services -> nmap -sn 192.168.0.0/24
-      stop: "192.168.0.250"
+      stop: "192.168.0.247"
