@@ -2,5 +2,5 @@ name             : crossplane
 namespace        : crossplane
 chart            : crossplane
 repoURL       : https://charts.crossplane.io/stable
-targetRevision          : 2.5.0-rc.0.49.g3d8d7c1ef
+targetRevision          : 2.4.1
 syncWave: "0"
