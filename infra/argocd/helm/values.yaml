@@ -21,7 +21,7 @@ configs:
         - email
   rbac:
     policy.default: role:readonly
-    scopes: '[groups, email]'
+    scopes: '[roles, groups, email]'
     policy.csv: |
       g, Admin, role:admin
       g, Reader, role:readonly
