@@ -67,3 +67,9 @@ The helm folder must include two files:
 ##### manifests
 tbd
 
+
+
+
+# tbd:
+- Tailscale exit-node configuration
+- 
