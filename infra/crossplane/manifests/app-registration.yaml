@@ -22,30 +22,45 @@ spec:
               properties:
                 displayName:
                   type: string
+                  description: Display name of the app registration in Entra ID.
                 redirectUris:
                   type: array
-                  items: { type: string }
+                  description: Web redirect URIs for sign-in.
+                  items:
+                    type: string
                 appRoles:
                   type: array
+                  description: App roles to define and who gets them.
                   items:
                     type: object
                     required: [value, displayName, description]
                     properties:
-                      value: { type: string }
-                      displayName: { type: string }
-                      description: { type: string }
+                      value:
+                        type: string
+                        description: Role value sent in the token's roles claim.
+                      displayName:
+                        type: string
+                      description:
+                        type: string
                       groups:
                         type: array
-                        items: { type: string }
+                        description: Names of Group resources in the entra-groups namespace.
+                        items:
+                          type: string
                       users:
                         type: array
-                        items: { type: string }
+                        description: Object IDs of users to assign directly.
+                        items:
+                          type: string
             status:
               type: object
               properties:
-                clientId: { type: string }
-                servicePrincipalObjectId: { type: string }
-              unresolvedGroups:
+                clientId:
+                  type: string
+                  description: Application (client) ID.
+                servicePrincipalObjectId:
+                  type: string
+                unresolvedGroups:
                   type: array
                   description: Group names that could not be resolved to an object ID.
                   items:
