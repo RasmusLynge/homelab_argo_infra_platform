@@ -18,4 +18,4 @@ spec:
     secretRef:
       namespace: crossplane
       name: azure-secret
-      key: creds
+      key: cred.json
