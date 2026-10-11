@@ -76,14 +76,14 @@ spec:
             {{- $sp   := dig "resources" "service-principal" "resource" "status" "atProvider" dict .observed }}
             {{- $groupNs := "entra-groups" }}
 
-            {{- /* stable role IDs */}}
+            {{- /* Stable role IDs derived from displayName + role value */}}
             {{- $roleIds := dict }}
             {{- range $spec.appRoles }}
             {{- $h := sha1sum (printf "%s-%s" $spec.displayName .value) }}
             {{- $_ := set $roleIds .value (printf "%s-%s-5%s-8%s-%s" (substr 0 8 $h) (substr 8 12 $h) (substr 13 16 $h) (substr 17 20 $h) (substr 20 32 $h)) }}
             {{- end }}
 
-            {{- /* every group name used by any role */}}
+            {{- /* Every group name used by any role */}}
             {{- $groupNames := list }}
             {{- range $spec.appRoles }}
             {{- range (.groups | default list) }}
@@ -92,7 +92,7 @@ spec:
             {{- end }}
             {{- $groupNames = $groupNames | uniq }}
 
-            {{- /* resolve group name -> object ID from the fetched Groups */}}
+            {{- /* Resolve group name -> object ID from the fetched Group resources */}}
             {{- $groupIds := dict }}
             {{- $unresolved := list }}
             {{- range $name := $groupNames }}
@@ -133,15 +133,6 @@ spec:
                 signInAudience: AzureADMyOrg
                 web:
                   redirectUris: {{ $spec.redirectUris | default list | toJson }}
-                appRole:
-                  {{- range $spec.appRoles }}
-                  - id: {{ get $roleIds .value }}
-                    allowedMemberTypes: ["User"]
-                    displayName: {{ .displayName | quote }}
-                    description: {{ .description | quote }}
-                    value: {{ .value | quote }}
-                    enabled: true
-                  {{- end }}
 
             {{- if $app.clientId }}
             ---
@@ -165,6 +156,23 @@ spec:
                 applicationId: {{ $app.id }}
               writeConnectionSecretToRef:
                 name: {{ $xr.metadata.name }}-client-secret
+
+            {{- range $spec.appRoles }}
+            ---
+            apiVersion: applications.azuread.m.upbound.io/v1beta1
+            kind: AppRole
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: app-role-{{ .value | lower }}
+            spec:
+              forProvider:
+                applicationId: {{ $app.id }}
+                roleId: {{ get $roleIds .value }}
+                allowedMemberTypes: ["User"]
+                displayName: {{ .displayName | quote }}
+                description: {{ .description | quote }}
+                value: {{ .value | quote }}
+            {{- end }}
             {{- end }}
 
             {{- if $sp.objectId }}
