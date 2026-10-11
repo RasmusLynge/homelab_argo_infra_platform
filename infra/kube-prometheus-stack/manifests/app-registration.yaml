@@ -10,12 +10,12 @@ spec:
     - value: GrafanaAdmin
       displayName: Grafana Admin
       description: Grafana server admin — full instance administration.
-      groups: ["homelab-admin"]
+      groups: ["homelab-admin-crossplane"]
     - value: Admin
       displayName: Admin
       description: Grafana organization Admin role.
-      groups: ["homelab-admin"]
+      groups: ["homelab-admin-crossplane"]
     - value: Viewer
       displayName: Viewer
       description: Grafana organization Viewer role.
-      groups: ["homelab-reader"]
+      groups: ["homelab-reader-crossplane"]

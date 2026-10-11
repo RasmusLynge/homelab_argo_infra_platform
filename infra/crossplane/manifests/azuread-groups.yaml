@@ -1,0 +1,17 @@
+apiVersion: groups.azuread.m.upbound.io/v1beta1
+kind: Group
+metadata:
+  name: homelab-admin-crossplane
+spec:
+  forProvider:
+    displayName: homelab-admin-crossplane
+    securityEnabled: true
+---
+apiVersion: groups.azuread.m.upbound.io/v1beta1
+kind: Group
+metadata:
+  name: homelab-reader-crossplane
+spec:
+  forProvider:
+    displayName: homelab-reader-crossplane
+    securityEnabled: true
