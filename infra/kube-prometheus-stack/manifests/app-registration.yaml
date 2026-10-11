@@ -1,4 +1,4 @@
-apiVersion: platform.example.org/v1alpha1
+apiVersion: platform.lynge.party/v1alpha1
 kind: AppRegistration
 metadata:
   name: grafana

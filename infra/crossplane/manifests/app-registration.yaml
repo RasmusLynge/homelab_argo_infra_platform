@@ -1,10 +1,10 @@
 apiVersion: apiextensions.crossplane.io/v2
 kind: CompositeResourceDefinition
 metadata:
-  name: appregistrations.platform.example.org
+  name: appregistrations.platform.lynge.party
 spec:
   scope: Namespaced
-  group: platform.example.org
+  group: platform.lynge.party
   names:
     kind: AppRegistration
     plural: appregistrations
@@ -72,7 +72,7 @@ metadata:
   name: appregistration
 spec:
   compositeTypeRef:
-    apiVersion: platform.example.org/v1alpha1
+    apiVersion: platform.lynge.party/v1alpha1
     kind: AppRegistration
   mode: Pipeline
   pipeline:
@@ -214,7 +214,7 @@ spec:
             {{- end }}
             {{- end }}
             ---
-            apiVersion: platform.example.org/v1alpha1
+            apiVersion: platform.lynge.party/v1alpha1
             kind: AppRegistration
             status:
               clientId: {{ $app.clientId | default "" | quote }}
