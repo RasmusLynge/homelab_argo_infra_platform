@@ -2,6 +2,7 @@ apiVersion: groups.azuread.m.upbound.io/v1beta1
 kind: Group
 metadata:
   name: homelab-admin-crossplane
+  namespace: entra-groups
 spec:
   forProvider:
     displayName: homelab-admin-crossplane
@@ -11,6 +12,7 @@ apiVersion: groups.azuread.m.upbound.io/v1beta1
 kind: Group
 metadata:
   name: homelab-reader-crossplane
+  namespace: entra-groups
 spec:
   forProvider:
     displayName: homelab-reader-crossplane
