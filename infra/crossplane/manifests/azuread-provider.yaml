@@ -8,14 +8,14 @@ spec:
 
 # az ad sp create-for-rbac --sdk-auth --role Owner --scopes /subscriptions/<Subscription ID> 
 # kubectl create secret generic azure-secret -n crossplane --from-file=creds=./cred.json
-apiVersion: azure.upbound.io/v1beta1
+apiVersion: azuread.m.upbound.io/v1beta1
 metadata:
   name: default
-kind: ProviderConfig
+kind: ClusterProviderConfig
 spec:
   credentials:
     source: Secret
     secretRef:
       namespace: crossplane
-      name: azure-secret
+      name: azure-secrets
       key: cred.json
