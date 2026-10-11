@@ -45,6 +45,11 @@ spec:
               properties:
                 clientId: { type: string }
                 servicePrincipalObjectId: { type: string }
+              unresolvedGroups:
+                  type: array
+                  description: Group names that could not be resolved to an object ID.
+                  items:
+                    type: string
 ---
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
@@ -69,12 +74,52 @@ spec:
             {{- $spec := $xr.spec }}
             {{- $app  := dig "resources" "application" "resource" "status" "atProvider" dict .observed }}
             {{- $sp   := dig "resources" "service-principal" "resource" "status" "atProvider" dict .observed }}
+            {{- $groupNs := "entra-groups" }}
 
-            {{- /* stable role IDs, like local.app_role_ids_by_value */}}
+            {{- /* stable role IDs */}}
             {{- $roleIds := dict }}
             {{- range $spec.appRoles }}
             {{- $h := sha1sum (printf "%s-%s" $spec.displayName .value) }}
             {{- $_ := set $roleIds .value (printf "%s-%s-5%s-8%s-%s" (substr 0 8 $h) (substr 8 12 $h) (substr 13 16 $h) (substr 17 20 $h) (substr 20 32 $h)) }}
+            {{- end }}
+
+            {{- /* every group name used by any role */}}
+            {{- $groupNames := list }}
+            {{- range $spec.appRoles }}
+            {{- range (.groups | default list) }}
+            {{- $groupNames = append $groupNames . }}
+            {{- end }}
+            {{- end }}
+            {{- $groupNames = $groupNames | uniq }}
+
+            {{- /* resolve group name -> object ID from the fetched Groups */}}
+            {{- $groupIds := dict }}
+            {{- $unresolved := list }}
+            {{- range $name := $groupNames }}
+            {{- $items := dig (printf "group-%s" $name) "items" list ($.extraResources | default dict) }}
+            {{- $oid := "" }}
+            {{- if $items }}
+            {{- $oid = dig "resource" "status" "atProvider" "objectId" "" (first $items) }}
+            {{- end }}
+            {{- if $oid }}
+            {{- $_ := set $groupIds $name $oid }}
+            {{- else }}
+            {{- $unresolved = append $unresolved $name }}
+            {{- end }}
+            {{- end }}
+
+            {{- if $groupNames }}
+            ---
+            apiVersion: meta.gotemplating.fn.crossplane.io/v1alpha1
+            kind: ExtraResources
+            requirements:
+              {{- range $groupNames }}
+              group-{{ . }}:
+                apiVersion: groups.azuread.m.upbound.io/v1beta1
+                kind: Group
+                matchName: {{ . }}
+                namespace: {{ $groupNs }}
+              {{- end }}
             {{- end }}
             ---
             apiVersion: applications.azuread.m.upbound.io/v1beta1
@@ -124,7 +169,13 @@ spec:
 
             {{- if $sp.objectId }}
             {{- range $role := $spec.appRoles }}
-            {{- range $pid := concat ($role.groups | default list) ($role.users | default list) }}
+            {{- $pids := $role.users | default list }}
+            {{- range $g := ($role.groups | default list) }}
+            {{- if hasKey $groupIds $g }}
+            {{- $pids = append $pids (get $groupIds $g) }}
+            {{- end }}
+            {{- end }}
+            {{- range $pid := $pids }}
             ---
             apiVersion: app.azuread.m.upbound.io/v1beta1
             kind: RoleAssignment
@@ -145,6 +196,7 @@ spec:
             status:
               clientId: {{ $app.clientId | default "" | quote }}
               servicePrincipalObjectId: {{ $sp.objectId | default "" | quote }}
+              unresolvedGroups: {{ $unresolved | toJson }}
     - step: ready
       functionRef:
         name: function-auto-ready
