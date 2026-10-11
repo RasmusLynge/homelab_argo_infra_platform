@@ -1,0 +1,150 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: appregistrations.platform.example.org
+spec:
+  scope: Namespaced
+  group: platform.example.org
+  names:
+    kind: AppRegistration
+    plural: appregistrations
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [displayName]
+              properties:
+                displayName:
+                  type: string
+                redirectUris:
+                  type: array
+                  items: { type: string }
+                appRoles:
+                  type: array
+                  items:
+                    type: object
+                    required: [value, displayName, description]
+                    properties:
+                      value: { type: string }
+                      displayName: { type: string }
+                      description: { type: string }
+                      groups:
+                        type: array
+                        items: { type: string }
+                      users:
+                        type: array
+                        items: { type: string }
+            status:
+              type: object
+              properties:
+                clientId: { type: string }
+                servicePrincipalObjectId: { type: string }
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: appregistration
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: AppRegistration
+  mode: Pipeline
+  pipeline:
+    - step: render
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $xr   := .observed.composite.resource }}
+            {{- $spec := $xr.spec }}
+            {{- $app  := dig "resources" "application" "resource" "status" "atProvider" dict .observed }}
+            {{- $sp   := dig "resources" "service-principal" "resource" "status" "atProvider" dict .observed }}
+
+            {{- /* stable role IDs, like local.app_role_ids_by_value */}}
+            {{- $roleIds := dict }}
+            {{- range $spec.appRoles }}
+            {{- $h := sha1sum (printf "%s-%s" $spec.displayName .value) }}
+            {{- $_ := set $roleIds .value (printf "%s-%s-5%s-8%s-%s" (substr 0 8 $h) (substr 8 12 $h) (substr 13 16 $h) (substr 17 20 $h) (substr 20 32 $h)) }}
+            {{- end }}
+            ---
+            apiVersion: applications.azuread.m.upbound.io/v1beta1
+            kind: Application
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: application
+            spec:
+              forProvider:
+                displayName: {{ $spec.displayName | quote }}
+                signInAudience: AzureADMyOrg
+                web:
+                  redirectUris: {{ $spec.redirectUris | default list | toJson }}
+                appRole:
+                  {{- range $spec.appRoles }}
+                  - id: {{ get $roleIds .value }}
+                    allowedMemberTypes: ["User"]
+                    displayName: {{ .displayName | quote }}
+                    description: {{ .description | quote }}
+                    value: {{ .value | quote }}
+                    enabled: true
+                  {{- end }}
+
+            {{- if $app.clientId }}
+            ---
+            apiVersion: serviceprincipals.azuread.m.upbound.io/v1beta1
+            kind: Principal
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: service-principal
+            spec:
+              forProvider:
+                clientId: {{ $app.clientId }}
+                appRoleAssignmentRequired: true
+            ---
+            apiVersion: applications.azuread.m.upbound.io/v1beta1
+            kind: Password
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: password
+            spec:
+              forProvider:
+                applicationId: {{ $app.id }}
+              writeConnectionSecretToRef:
+                name: {{ $xr.metadata.name }}-client-secret
+            {{- end }}
+
+            {{- if $sp.objectId }}
+            {{- range $role := $spec.appRoles }}
+            {{- range $pid := concat ($role.groups | default list) ($role.users | default list) }}
+            ---
+            apiVersion: app.azuread.m.upbound.io/v1beta1
+            kind: RoleAssignment
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: assignment-{{ $pid }}-{{ $role.value | lower }}
+            spec:
+              forProvider:
+                appRoleId: {{ get $roleIds $role.value }}
+                principalObjectId: {{ $pid }}
+                resourceObjectId: {{ $sp.objectId }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            ---
+            apiVersion: platform.example.org/v1alpha1
+            kind: AppRegistration
+            status:
+              clientId: {{ $app.clientId | default "" | quote }}
+              servicePrincipalObjectId: {{ $sp.objectId | default "" | quote }}
+    - step: ready
+      functionRef:
+        name: function-auto-ready

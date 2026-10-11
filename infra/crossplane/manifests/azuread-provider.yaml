@@ -1,9 +1,9 @@
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
-  name: provider-azure-management
+  name: provider-azuread
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-management:v2.7.2
+  package: xpkg.upbound.io/upbound/provider-azuread:v2.5.0
 ---
 
 # az ad sp create-for-rbac --sdk-auth --role Owner --scopes /subscriptions/<Subscription ID> 
