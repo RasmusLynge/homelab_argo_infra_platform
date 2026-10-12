@@ -25,17 +25,17 @@ grafana:
       skip_org_role_sync: false
   envValueFrom:
     AZURE_TENANT_ID:
-      secretKeyRef:
-        name: grafana-azuread
+      configMapKeyRef:
+        name: grafana-appregistration
         key: tenant-id
     GF_AUTH_AZUREAD_CLIENT_ID:
-      secretKeyRef:
-        name: grafana-azuread
+      configMapKeyRef:
+        name: grafana-appregistration
         key: client-id
     GF_AUTH_AZUREAD_CLIENT_SECRET:
       secretKeyRef:
-        name: grafana-azuread
-        key: client-secret
+        name: grafana-client-secret
+        key: attribute.value
 
 # talos specific settings... setting up later
 kubeControllerManager: {enabled: false}

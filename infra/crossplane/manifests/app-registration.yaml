@@ -171,6 +171,16 @@ spec:
                 applicationId: {{ $app.id }}
               writeConnectionSecretToRef:
                 name: {{ $xr.metadata.name }}-client-secret
+            ---
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: {{ $xr.metadata.name }}-appregistration
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: appregistration-ids
+            data:
+              client-id: {{ $app.clientId | quote }}
+              tenant-id: {{ $sp.applicationTenantId | quote }}
 
             {{- range $spec.appRoles }}
             ---
