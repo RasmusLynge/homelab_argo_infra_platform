@@ -3,7 +3,6 @@ kind: AppRegistration
 metadata:
   name: grafana
 spec:
-  displayName: grafana
   redirectUris:
     - https://grafana.home.lynge.party/login/azuread
   appRoles:
