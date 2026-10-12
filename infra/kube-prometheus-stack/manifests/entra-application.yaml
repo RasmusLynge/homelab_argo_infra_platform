@@ -1,5 +1,5 @@
 apiVersion: platform.lynge.party/v1alpha1
-kind: AppRegistration
+kind: EntraApplication
 metadata:
   name: grafana
 spec:
