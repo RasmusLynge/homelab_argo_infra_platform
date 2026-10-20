@@ -15,8 +15,7 @@ spec:
           - resources:
               namespaces:
                 - kube-system
-                - cilium
-                - kube-prometheus-stack
+                - kube-prometheus-stack # excluded due to node-exporter, which is handled by its own rule
       mutate:
         patchStrategicMerge:
           spec:

@@ -3,6 +3,12 @@ ipam:
 
 operator:
   replicas: 1
+  prometheus:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
 
 # Using KubePrism through Talos
 kubeProxyReplacement: true
@@ -45,12 +51,43 @@ k8sClientRateLimit:
   burst: 100
 
 hubble:
-  enabled: false
-#  relay:
-#    enabled: true
-#  ui:
-#    enabled: true
-#  tls:
-#    auto:
-#      enabled: true
-#      method: cronJob
+  enabled: true
+
+  relay:
+    enabled: true          # gathers flows from all nodes; needed for the CLI and UI
+
+  ui:
+    enabled: true
+
+  tls:
+    auto:
+      enabled: true
+      method: cronJob
+
+  metrics:
+    enabled:
+     # - dns
+      - drop
+     # - tcp
+     # - flow
+     # - icmp
+      - "policy:sourceContext=app|workload-name|reserved-identity;destinationContext=app|workload-name|dns|reserved-identity;labelsContext=source_namespace,destination_namespace"
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: kube-prometheus-stack   # must match your kube-prom-stack release name
+    dashboards:
+      enabled: true 
+      namespace: monitoring
+
+  dropEventEmitter:
+    enabled: true  
+    reasons:
+      - policy_denied
+
+prometheus:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
