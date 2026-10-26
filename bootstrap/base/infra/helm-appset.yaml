@@ -9,27 +9,37 @@ spec:
   syncPolicy:
     preserveResourcesOnDeletion: true
   generators:
-    - git:
-        repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
-        revision: main
-        files:
-          - path: infra/*/helm/config.yaml
+    - merge:
+        mergeKeys: [name]
+        generators:
+          # The base configs for the Helm chart
+          - git:
+              repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
+              revision: main
+              files:
+                - path: infra/*/helm/base/config.yaml
+          # The environment specifics for the helm chart
+          - git:
+              repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
+              revision: main
+              files:
+                - path: infra/*/helm/overlays/ENV/config.yaml
   template:
     metadata:
-      name: '{{.name}}'
+      name: "{{.name}}"
       annotations:
-        argocd.argoproj.io/sync-wave: '{{.syncWave}}'
+        argocd.argoproj.io/sync-wave: "{{.syncWave}}"
         argocd.argoproj.io/compare-options: '{{ if dig "serverSideDiff" false . }}ServerSideDiff=true{{ end }}'
       labels:
-        component: '{{.name}}'
+        component: "{{.name}}"
     spec:
       project: infra
       sources:
-        - repoURL: '{{.repoURL}}'
-          chart: '{{.chart}}'
-          targetRevision: '{{.targetRevision}}'
+        - repoURL: "{{.repoURL}}"
+          chart: "{{.chart}}"
+          targetRevision: "{{.targetRevision}}"
           helm:
-            releaseName: '{{.name}}'
+            releaseName: "{{.name}}"
             valueFiles:
               - $values/infra/{{.name}}/helm/values.yaml
         - repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
@@ -37,9 +47,9 @@ spec:
           ref: values
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{.namespace}}'
+        namespace: "{{.namespace}}"
       syncPolicy:
-        automated: 
+        automated:
           prune: true
           selfHeal: true
         syncOptions: [CreateNamespace=true, ServerSideApply=true]

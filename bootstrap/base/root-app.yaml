@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
     targetRevision: main
-    path: bootstrap
+    path: bootstrap/base
     directory:
       recurse: true
   destination:

@@ -6,5 +6,5 @@ spec:
   hostname: homelab-subnet-router
   subnetRouter:
     advertiseRoutes:
-      - "192.168.0.240/29"
-      - "192.168.0.36/32"
+      - "192.168.0.0/29"
+      - "192.168.0.0/32"

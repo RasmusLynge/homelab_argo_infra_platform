@@ -6,11 +6,11 @@ grafana:
   persistence:
     enabled: false # using configmaps for dashboards
   resources:
-    requests: {cpu: 50m, memory: 256Mi}
-    limits: {memory: 768Mi}
+    requests: { cpu: 50m, memory: 256Mi }
+    limits: { memory: 768Mi }
   grafana.ini:
     server:
-      root_url: https://grafana.home.lynge.party
+      root_url: https://grafana.home.yourdomain.com
     auth.azuread:
       enabled: true
       name: Microsoft
@@ -38,10 +38,10 @@ grafana:
         key: client-secret
 
 # talos specific settings... setting up later
-kubeControllerManager: {enabled: false}
-kubeScheduler: {enabled: false}
-kubeEtcd: {enabled: false}
-kubeProxy: {enabled: false}
+kubeControllerManager: { enabled: false }
+kubeScheduler: { enabled: false }
+kubeEtcd: { enabled: false }
+kubeProxy: { enabled: false }
 
 prometheus:
   prometheusSpec:
@@ -50,7 +50,7 @@ prometheus:
     retention: 10d
     retentionSize: 8GB
     resources:
-      requests: {memory: 400Mi}
-      limits: {memory: 1Gi}
+      requests: { memory: 400Mi }
+      limits: { memory: 1Gi }
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false

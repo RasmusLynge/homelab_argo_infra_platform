@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - target: { kind: ClusterSecretStore, name: azure-store }
+    patch: |-
+      - op: replace
+        path: /spec/provider/azurekv/tenantId
+        value: df5e637f-45a0-46cb-bed6-ed30163eb1f7
+      - op: replace
+        path: /spec/provider/azurekv/vaultUrl
+        value: https://kv-homelab-rja.vault.azure.net/

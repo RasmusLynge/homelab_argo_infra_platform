@@ -1,0 +1,66 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - target: { kind: Application, name: root }
+    patch: |-
+
+      # Point to the dev overlay
+      - op: replace
+        path: /spec/source/path
+        value: bootstrap/overlays/dev
+      - op: replace
+        path: /spec/source/targetRevision
+        value: dev
+
+  - target: { kind: ApplicationSet, name: infra-manifests }
+    patch: |-
+
+      # Point to the dev overlay
+      - op: replace
+        path: /spec/generators/0/git/directories/0/path
+        value: infra/*/manifests/overlays/dev
+        
+      # using git dev branch
+      - op: replace
+        path: /spec/generators/0/git/revision
+        value: dev
+      - op: replace
+        path: /spec/source/targetRevision
+        value: dev
+
+  - target: { kind: ApplicationSet, name: infra-crds }
+    patch: |-
+
+      # Point to the dev overlay
+      - op: replace
+        path: /spec/generators/0/git/directories/0/path
+        value: infra/*/crds/overlays/dev
+      # using git dev branch
+      - op: replace
+        path: /spec/generators/0/git/revision
+        value: dev
+      - op: replace
+        path: /spec/source/targetRevision
+        value: dev
+
+  - target: { kind: ApplicationSet, name: infra-helm }
+    patch: |-
+
+      # Add the specific configs for dev
+      - op: replace
+        path: /spec/generators/0/merge/generators/1/git/files/0/path
+        value: infra/*/helm/overlays/dev/config.yaml
+      # Add the specific values for dev
+      - op: add
+        path: /spec/template/spec/sources/0/helm/valueFiles/-
+        value: $values/infra/{{.name}}/helm/overlays/dev/values.yaml
+
+      # using git dev branch
+      - op: replace
+        path: /spec/generators/0/git/revision
+        value: dev
+      - op: replace
+        path: /spec/source/targetRevision
+        value: dev

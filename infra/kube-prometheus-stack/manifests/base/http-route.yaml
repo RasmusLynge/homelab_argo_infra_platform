@@ -7,7 +7,7 @@ spec:
     - name: home
       namespace: gateway
   hostnames:
-    - grafana.home.lynge.party
+    - grafana.home.yourhostname
   rules:
     - backendRefs:
         - name: kube-prometheus-stack-grafana

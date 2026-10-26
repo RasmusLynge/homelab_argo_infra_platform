@@ -13,23 +13,23 @@ spec:
         repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
         revision: main
         directories:
-          - path: infra/*/manifests
+          - path: infra/*/manifests/base
   template:
     metadata:
-      name: '{{index .path.segments 1}}-manifests'
+      name: "{{index .path.segments 1}}-manifests"
       annotations:
         argocd.argoproj.io/sync-wave: "1"
       labels:
-        component: '{{index .path.segments 1}}'
+        component: "{{index .path.segments 1}}"
     spec:
       project: infra
       source:
         repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
         targetRevision: main
-        path: '{{.path.path}}'
+        path: "{{.path.path}}"
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{index .path.segments 1}}'
+        namespace: "{{index .path.segments 1}}"
       syncPolicy:
-        automated: {prune: true, selfHeal: true}
+        automated: { prune: true, selfHeal: true }
         syncOptions: [CreateNamespace=true]
