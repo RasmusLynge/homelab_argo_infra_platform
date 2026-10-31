@@ -4,7 +4,7 @@ metadata:
   name: httproute-https-and-hostname
 spec:
   validationActions:
-    - Deny        # start with Audit, flip to Deny once reports are clean
+    - Deny
   failurePolicy: Fail
   evaluation:
     background:

@@ -2,7 +2,6 @@ apiVersion: kyverno.io/v1
 kind: Policy
 metadata:
   name: prom-stack-security
-  namespace: kube-prometheus-stack
 spec:
   background: true
   rules:

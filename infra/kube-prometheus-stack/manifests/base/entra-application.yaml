@@ -1,0 +1,20 @@
+apiVersion: platform.lynge.party/v1alpha1
+kind: EntraApplication
+metadata:
+  name: grafana
+spec:
+  redirectUris:
+    - https://grafana.home.lynge.party/login/azuread
+  appRoles:
+    - value: GrafanaAdmin
+      displayName: Grafana Admin
+      description: Grafana server admin — full instance administration.
+      groups: ["homelab-admin-crossplane"]
+    - value: Admin
+      displayName: Admin
+      description: Grafana organization Admin role.
+      groups: ["homelab-admin-crossplane"]
+    - value: Viewer
+      displayName: Viewer
+      description: Grafana organization Viewer role.
+      groups: ["homelab-reader-crossplane"]

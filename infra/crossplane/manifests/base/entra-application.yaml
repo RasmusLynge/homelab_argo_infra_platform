@@ -1,0 +1,253 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: entraapplications.platform.lynge.party
+spec:
+  scope: Namespaced
+  group: platform.lynge.party
+  names:
+    kind: EntraApplication
+    plural: entraapplications
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                redirectUris:
+                  type: array
+                  description: Web redirect URIs for sign-in.
+                  items:
+                    type: string
+                secretLabels:
+                  type: object
+                  description: Labels to put on the generated OIDC Secret.
+                  additionalProperties:
+                    type: string
+                secretRotation:
+                  type: string
+                  description: Change this value to force a client secret rotation.
+                appRoles:
+                  type: array
+                  description: App roles to define and who gets them.
+                  items:
+                    type: object
+                    required: [value, displayName, description]
+                    properties:
+                      value:
+                        type: string
+                        description: Role value sent in the token's roles claim.
+                      displayName:
+                        type: string
+                      description:
+                        type: string
+                      groups:
+                        type: array
+                        description: Names of Group resources in the entra-groups namespace.
+                        items:
+                          type: string
+                      users:
+                        type: array
+                        description: Object IDs of users to assign directly.
+                        items:
+                          type: string
+            status:
+              type: object
+              properties:
+                clientId:
+                  type: string
+                  description: Application (client) ID.
+                servicePrincipalObjectId:
+                  type: string
+                unresolvedGroups:
+                  type: array
+                  description: Group names that could not be resolved to an object ID.
+                  items:
+                    type: string
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: entraapplication
+spec:
+  compositeTypeRef:
+    apiVersion: platform.lynge.party/v1alpha1
+    kind: EntraApplication
+  mode: Pipeline
+  pipeline:
+    - step: render
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $xr   := .observed.composite.resource }}
+            {{- $spec := $xr.spec }}
+            {{- $app  := dig "resources" "application" "resource" "status" "atProvider" dict .observed }}
+            {{- $sp   := dig "resources" "service-principal" "resource" "status" "atProvider" dict .observed }}
+            {{- $groupNs := "entra-groups" }}
+
+            {{- /* Stable role IDs derived from name + role value */}}
+            {{- $roleIds := dict }}
+            {{- range $spec.appRoles }}
+            {{- $h := sha1sum (printf "%s/%s-%s" $xr.metadata.namespace $xr.metadata.name .value) }}
+            {{- $_ := set $roleIds .value (printf "%s-%s-5%s-8%s-%s" (substr 0 8 $h) (substr 8 12 $h) (substr 13 16 $h) (substr 17 20 $h) (substr 20 32 $h)) }}
+            {{- end }}
+
+            {{- /* Every group name used by any role */}}
+            {{- $groupNames := list }}
+            {{- range $spec.appRoles }}
+            {{- range (.groups | default list) }}
+            {{- $groupNames = append $groupNames . }}
+            {{- end }}
+            {{- end }}
+            {{- $groupNames = $groupNames | uniq }}
+
+            {{- /* Resolve group name -> object ID from the fetched Group resources */}}
+            {{- $groupIds := dict }}
+            {{- $unresolved := list }}
+            {{- range $name := $groupNames }}
+            {{- $items := dig (printf "group-%s" $name) "items" list ($.extraResources | default dict) }}
+            {{- $oid := "" }}
+            {{- if $items }}
+            {{- $oid = dig "resource" "status" "atProvider" "objectId" "" (first $items) }}
+            {{- end }}
+            {{- if $oid }}
+            {{- $_ := set $groupIds $name $oid }}
+            {{- else }}
+            {{- $unresolved = append $unresolved $name }}
+            {{- end }}
+            {{- end }}
+
+            {{- if $groupNames }}
+            ---
+            apiVersion: meta.gotemplating.fn.crossplane.io/v1alpha1
+            kind: ExtraResources
+            requirements:
+              {{- range $groupNames }}
+              group-{{ . }}:
+                apiVersion: groups.azuread.m.upbound.io/v1beta1
+                kind: Group
+                matchName: {{ . }}
+                namespace: {{ $groupNs }}
+              {{- end }}
+            {{- end }}
+            ---
+            apiVersion: applications.azuread.m.upbound.io/v1beta1
+            kind: Application
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: application
+            spec:
+              forProvider:
+                displayName: {{ $xr.metadata.name | quote }}
+                signInAudience: AzureADMyOrg
+                web:
+                  redirectUris: {{ $spec.redirectUris | default list | toJson }}
+
+            {{- if $app.clientId }}
+            ---
+            apiVersion: serviceprincipals.azuread.m.upbound.io/v1beta1
+            kind: Principal
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: service-principal
+            spec:
+              forProvider:
+                clientId: {{ $app.clientId }}
+                appRoleAssignmentRequired: true
+            {{- $month := now | date "1" | atoi }}
+            {{- $period := printf "%s-H%d" (now | date "2006") (ternary 1 2 (le $month 6)) }}
+            ---
+            apiVersion: applications.azuread.m.upbound.io/v1beta1
+            kind: Password
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: password
+            spec:
+              forProvider:
+                applicationId: {{ $app.id }}
+                endDateRelative: 8760h
+                rotateWhenChanged:
+                  period: {{ $period | quote }}
+                  manual: {{ $spec.secretRotation | default "" | quote }}
+              writeConnectionSecretToRef:
+                name: {{ $xr.metadata.name }}-client-secret
+            
+            {{- $pwConn := dig "resources" "password" "connectionDetails" dict .observed }}
+            {{- if and $sp.objectId (index $pwConn "attribute.value") }}
+            ---
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: {{ $xr.metadata.name }}-ad-oidc
+              labels: {{ $spec.secretLabels | default dict | toJson }}
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: oidc-secret
+            type: Opaque
+            data:
+              clientId: {{ $app.clientId | b64enc }}
+              tenantId: {{ $sp.applicationTenantId | b64enc }}
+              issuer: {{ printf "https://login.microsoftonline.com/%s/v2.0" $sp.applicationTenantId | b64enc }}
+              clientSecret: {{ index $pwConn "attribute.value" }}
+            {{- end }}
+
+            {{- range $spec.appRoles }}
+            ---
+            apiVersion: applications.azuread.m.upbound.io/v1beta1
+            kind: AppRole
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: app-role-{{ .value | lower }}
+            spec:
+              forProvider:
+                applicationId: {{ $app.id }}
+                roleId: {{ get $roleIds .value }}
+                allowedMemberTypes: ["User"]
+                displayName: {{ .displayName | quote }}
+                description: {{ .description | quote }}
+                value: {{ .value | quote }}
+            {{- end }}
+            {{- end }}
+
+            {{- if $sp.objectId }}
+            {{- range $role := $spec.appRoles }}
+            {{- $pids := $role.users | default list }}
+            {{- range $g := ($role.groups | default list) }}
+            {{- if hasKey $groupIds $g }}
+            {{- $pids = append $pids (get $groupIds $g) }}
+            {{- end }}
+            {{- end }}
+            {{- range $pid := $pids | uniq }}
+            ---
+            apiVersion: app.azuread.m.upbound.io/v1beta1
+            kind: RoleAssignment
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: assignment-{{ $pid }}-{{ $role.value | lower }}
+            spec:
+              forProvider:
+                appRoleId: {{ get $roleIds $role.value }}
+                principalObjectId: {{ $pid }}
+                resourceObjectId: {{ $sp.objectId }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            ---
+            apiVersion: platform.lynge.party/v1alpha1
+            kind: EntraApplication
+            status:
+              clientId: {{ $app.clientId | default "" | quote }}
+              servicePrincipalObjectId: {{ $sp.objectId | default "" | quote }}
+              unresolvedGroups: {{ $unresolved | toJson }}
+    - step: ready
+      functionRef:
+        name: function-auto-ready

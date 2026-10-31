@@ -1,21 +1,21 @@
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
-  name: provider-azure-management
+  name: provider-azuread
 spec:
-  package: xpkg.upbound.io/upbound/provider-azure-management:v2.7.2
+  package: xpkg.upbound.io/upbound/provider-azuread:v2.5.0
 ---
 
 # az ad sp create-for-rbac --sdk-auth --role Owner --scopes /subscriptions/<Subscription ID> 
 # kubectl create secret generic azure-secret -n crossplane --from-file=creds=./cred.json
-apiVersion: azure.upbound.io/v1beta1
+apiVersion: azuread.m.upbound.io/v1beta1
 metadata:
   name: default
-kind: ProviderConfig
+kind: ClusterProviderConfig
 spec:
   credentials:
     source: Secret
     secretRef:
-      namespace: upbound-system
+      namespace: crossplane
       name: azure-secret
-      key: creds
+      key: cred.json

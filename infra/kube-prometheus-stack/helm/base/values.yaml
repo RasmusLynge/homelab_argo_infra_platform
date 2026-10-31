@@ -26,16 +26,16 @@ grafana:
   envValueFrom:
     AZURE_TENANT_ID:
       secretKeyRef:
-        name: grafana-azuread
-        key: tenant-id
+        name: grafana-ad-oidc
+        key: tenantId
     GF_AUTH_AZUREAD_CLIENT_ID:
       secretKeyRef:
-        name: grafana-azuread
-        key: client-id
+        name: grafana-ad-oidc
+        key: clientId
     GF_AUTH_AZUREAD_CLIENT_SECRET:
       secretKeyRef:
-        name: grafana-azuread
-        key: client-secret
+        name: grafana-ad-oidc
+        key: clientSecret
 
 # talos specific settings... setting up later
 kubeControllerManager: { enabled: false }

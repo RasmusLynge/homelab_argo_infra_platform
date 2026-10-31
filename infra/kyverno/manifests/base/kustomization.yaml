@@ -3,4 +3,4 @@ kind: Kustomization
 resources:
   - default-pod-security-context.yaml
   - httproute-policy.yaml
-  - pod-security-context-prom-stack.yaml
+  - namespace-base-network-policies.yaml

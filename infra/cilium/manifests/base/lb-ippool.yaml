@@ -1,0 +1,8 @@
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: default-pool
+spec:
+  blocks:
+    - start: "10.10.10.10" # make sure these are free from dhcp and not used by other services -> nmap -sn 192.168.0.0/24
+      stop: "10.10.10.17"

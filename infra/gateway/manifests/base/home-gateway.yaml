@@ -5,13 +5,13 @@ metadata:
 spec:
   gatewayClassName: cilium
   addresses:
-  - type: IPAddress
-    value: 192.168.0.240
+    - type: IPAddress
+      value: 10.10.10.10 # ip within cilium lbippool
   listeners:
     - name: https
       protocol: HTTPS
       port: 443
-      hostname: "*.home.lynge.party"
+      hostname: "*.yourdomain.com"
       tls:
         certificateRefs:
           - name: home-tls
@@ -27,7 +27,7 @@ spec:
   secretName: home-tls
   issuerRef:
     name: letsencrypt-prod
-    kind: ClusterIssuer 
+    kind: ClusterIssuer
   dnsNames:
-    - "*.home.lynge.party"
-    - "home.lynge.party"
+    - "*.yourdomain.com"
+    - "yourdomain.com"

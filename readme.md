@@ -15,12 +15,12 @@ bootstrap/
 
 infra/
 ├── argocd/
-│   ├── crds
+│   ├── crds/
 │   │   └── ...yaml
-│   ├── helm
+│   ├── helm/
 │   │   ├── config.yaml
 │   │   └── values.yaml
-│   └── manifests
+│   └── manifests/
 │       └── ...yaml
 ├── cert-manager/
 ├── external-secrets/
@@ -56,20 +56,20 @@ If a subfolder within `infra/` contains a crd folder, Argo creates an applicatio
 All crd apps will be the first argocd creates.
 
 ##### helm
-If a subfolder within `infra/` contains a helm folder, Argo creates  an application named `<subfolder>`.
+If a subfolder within `infra/` contains a helm folder, Argo creates an application named `<subfolder>`.
 The helm folder must include two files:
-
-1: config.yaml
-    includes the necessary configs for the helm repo. Name, chart, repo, version, sync wave etc.
-2: values.yaml
-    contains the helm chart values
+  
+1: config.yaml:
+  Includes the necessary configs for the helm repo. Name, chart, repo, version, sync wave etc.  
+2: values.yaml: 
+  Contains the helm chart values
 
 ##### manifests
-tbd
-
+If a subfolder within infra/ contains a manifests folder, Argo creates an application named <subfolder>-manifests with the sync wave of 1.
+The manifests will be created in a namespace with the same name as the subfolder.
 
 
 
 # tbd:
-- Tailscale exit-node configuration
+- Apps
 - 
