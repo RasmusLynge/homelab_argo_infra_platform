@@ -5,7 +5,7 @@ configs:
   params:
     server.insecure: true # Using http-route with cert-manager
   cm:
-    url: https://argocd.home.lynge.party
+    url: https://yourhostname.com
     oidc.config: |
       name: Entra ID
       issuer: $argocd-oidc:issuer

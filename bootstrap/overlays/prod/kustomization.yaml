@@ -10,7 +10,7 @@ patches:
       - op: replace
         path: /spec/source/path
         value: bootstrap/overlays/prod
-        
+
       # using git main branch
       - op: replace
         path: /spec/source/targetRevision
@@ -23,28 +23,35 @@ patches:
       - op: replace
         path: /spec/generators/0/git/directories/0/path
         value: infra/*/manifests/overlays/prod
-        
+
       # using git main branch
       - op: replace
         path: /spec/generators/0/git/revision
         value: main
       - op: replace
-        path: /spec/source/targetRevision
+        path: /spec/template/spec/source/targetRevision
         value: main
 
   - target: { kind: ApplicationSet, name: infra-helm }
     patch: |-
 
-      # Add prod values file
+      # Add the specific configs for prod
+      - op: replace
+        path: /spec/generators/0/merge/generators/1/git/files/0/path
+        value: infra/*/helm/overlays/prod/config.yaml
+      # Add the specific values for prod
       - op: add
         path: /spec/template/spec/sources/0/helm/valueFiles/-
-        value: $values/infra/{{.name}}/helm/values-prod.yaml
+        value: $values/infra/{{.name}}/helm/overlays/prod/values.yaml
       # using git main branch
       - op: replace
-        path: /spec/generators/0/git/revision
+        path: /spec/generators/0/merge/generators/0/git/revision
         value: main
       - op: replace
-        path: /spec/source/targetRevision
+        path: /spec/generators/0/merge/generators/1/git/revision
+        value: main
+      - op: replace
+        path: /spec/template/spec/sources/1/targetRevision
         value: main
 
   - target: { kind: ApplicationSet, name: infra-crds }
@@ -59,5 +66,5 @@ patches:
         path: /spec/generators/0/git/revision
         value: main
       - op: replace
-        path: /spec/source/targetRevision
+        path: /spec/template/spec/source/targetRevision
         value: main

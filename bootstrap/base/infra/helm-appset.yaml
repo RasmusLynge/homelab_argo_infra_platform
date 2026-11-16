@@ -40,8 +40,9 @@ spec:
           targetRevision: "{{.targetRevision}}"
           helm:
             releaseName: "{{.name}}"
+#            ignoreMissingValueFiles: true
             valueFiles:
-              - $values/infra/{{.name}}/helm/values.yaml
+              - $values/infra/{{.name}}/helm/base/values.yaml
         - repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
           targetRevision: main
           ref: values

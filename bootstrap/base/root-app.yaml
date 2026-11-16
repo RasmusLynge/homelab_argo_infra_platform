@@ -11,8 +11,6 @@ spec:
     repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
     targetRevision: main
     path: bootstrap/base
-    directory:
-      recurse: true
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
