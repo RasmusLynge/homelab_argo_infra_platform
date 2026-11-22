@@ -9,53 +9,27 @@ spec:
   syncPolicy:
     preserveResourcesOnDeletion: true
   generators:
-    - merge:
-        mergeKeys: [name]
-        generators:
-          # The base configs for the Helm chart
-          - git:
-              repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
-              revision: main
-              files:
-                - path: infra/*/helm/base/config.yaml
-          # The environment specifics for the helm chart
-          - git:
-              repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
-              revision: main
-              files:
-                - path: infra/*/helm/overlays/ENV/config.yaml
+    - git:
+        repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
+        revision: main
+        directories:
+          - path: infra/*/helm/base
   template:
     metadata:
-      name: "{{.name}}"
-      annotations:
-        argocd.argoproj.io/sync-wave: "{{.syncWave}}"
-        argocd.argoproj.io/compare-options: '{{ if dig "serverSideDiff" false . }}ServerSideDiff=true{{ end }}'
+      name: "{{index .path.segments 1}}"
       labels:
-        component: "{{.name}}"
+        component: "{{index .path.segments 1}}"
     spec:
       project: infra
-      sources:
-        - repoURL: "{{.repoURL}}"
-          chart: "{{.chart}}"
-          targetRevision: "{{.targetRevision}}"
-          helm:
-            releaseName: "{{.name}}"
-#            ignoreMissingValueFiles: true
-            valueFiles:
-              - $values/infra/{{.name}}/helm/base/values.yaml
-        - repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
-          targetRevision: main
-          ref: values
+      source:
+        repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
+        targetRevision: main
+        path: "{{.path.path}}"
       destination:
         server: https://kubernetes.default.svc
-        namespace: "{{.namespace}}"
+        namespace: "{{index .path.segments 1}}"
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
-        syncOptions: [CreateNamespace=true, ServerSideApply=true]
-        managedNamespaceMetadata:
-          labels:
-            pod-security.kubernetes.io/enforce: '{{ if dig "namespaceEnforcePrivileged" false . }}privileged{{ else }}baseline{{ end }}'
-            pod-security.kubernetes.io/audit: baseline
-            pod-security.kubernetes.io/warn: baseline
+        syncOptions: [ServerSideApply=true]

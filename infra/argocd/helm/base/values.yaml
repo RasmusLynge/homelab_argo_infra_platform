@@ -4,8 +4,11 @@ dex:
 configs:
   params:
     server.insecure: true # Using http-route with cert-manager
+    controller.diff.server.side: true
   cm:
-    url: https://yourhostname.com
+    url: https://yourhostname.com   # set per environment in overlays/
+    # Lets kustomize render helmCharts: in every app
+    kustomize.buildOptions: --enable-helm
     oidc.config: |
       name: Entra ID
       issuer: $argocd-oidc:issuer

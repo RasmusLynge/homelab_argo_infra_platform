@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+helmCharts:
+  - name: argo-cd
+    repo: https://argoproj.github.io/argo-helm
+    version: 10.4.0
+    releaseName: argocd
+    namespace: argocd
+    valuesFile: values.yaml
+    includeCRDs: true
+    # kustomize can't ask the cluster like Argo's native Helm does.
+    # Set these if a chart checks .Capabilities (ServiceMonitors etc.)
+    # kubeVersion: "1.34.0"
+    # apiVersions:
+    #   - monitoring.coreos.com/v1
