@@ -4,6 +4,8 @@
 
 Everything is plain Kustomize: each folder Argo renders has a `base/` and one `overlays/<env>/` per environment.
 
+There is one branch, `main`. Every Application points at `main`; environments differ only by which `overlays/<env>` folders they use.
+
 ```
 bootstrap/
 ├── base/
@@ -13,8 +15,8 @@ bootstrap/
 │       ├── app-project.yaml
 │       └── components-appset.yaml   # one parent app per infra component
 └── overlays/
-    ├── dev/kustomization.yaml       # branch dev, apps/overlays/dev
-    └── prod/kustomization.yaml      # branch main, apps/overlays/prod
+    ├── dev/kustomization.yaml       # apps/overlays/dev
+    └── prod/kustomization.yaml      # apps/overlays/prod
 
 infra/
 ├── <component>/
@@ -64,7 +66,6 @@ The ApplicationSet creates one parent app for every component that has an `apps/
 A component runs in an environment when it has an overlay for it; adding a component is just adding the folder.
 
 The parent renders the component's `apps/` folder, which holds its child Applications.
-It also points every git-based child (label `git-source: "true"`) at the environment's branch, so components never mention the branch.
 
 #### Child apps
 - `helm.yaml`: the Helm chart, rendered by Argo's native Helm. The values live in `spec.source.helm.valuesObject`.
@@ -75,6 +76,11 @@ It also points every git-based child (label `git-source: "true"`) at the environ
 The parent syncs its children in sync waves (crds -1, helm 0, manifests 1), so e.g. a chart is healthy before the resources that need its CRDs or webhooks.
 This relies on the Application health check in `infra/argocd/apps/base/helm.yaml` (`resource.customizations.health.argoproj.io_Application`).
 Sync waves are not respected between components, because the parents are created by an ApplicationSet.
+
+### Making changes
+Work on a short-lived branch and open a PR to `main`. A change in `base/` reaches every environment at once,
+so try risky changes in `overlays/dev` first and move them to `base/` (or `overlays/prod`) in a follow-up PR.
+To run different chart versions per environment, patch `spec/source/targetRevision` of `<component>-helm` in the overlay.
 
 # tbd:
 - Apps

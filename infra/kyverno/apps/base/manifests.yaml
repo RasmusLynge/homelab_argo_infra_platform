@@ -7,7 +7,6 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
   labels:
     component: kyverno
-    
 spec:
   project: infra
   source:

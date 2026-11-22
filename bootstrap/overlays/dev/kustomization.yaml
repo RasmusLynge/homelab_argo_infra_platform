@@ -3,35 +3,16 @@ kind: Kustomization
 resources:
   - ../../base
 patches:
+  # Point the root app at the dev overlay
   - target: { kind: Application, name: root }
     patch: |-
-
-      # Point to the dev overlay
       - op: replace
         path: /spec/source/path
         value: bootstrap/overlays/dev
-      - op: replace
-        path: /spec/source/targetRevision
-        value: dev
 
+  # One parent app per component that has an apps/overlays/dev folder
   - target: { kind: ApplicationSet, name: infra-components }
     patch: |-
-
-      # One parent app per component that has an apps/overlays/dev folder
       - op: replace
         path: /spec/generators/0/git/directories/0/path
         value: infra/*/apps/overlays/dev
-
-      # using git dev branch, for the parents and their git-based children
-      - op: replace
-        path: /spec/generators/0/git/revision
-        value: dev
-      - op: replace
-        path: /spec/template/spec/source/targetRevision
-        value: dev
-      - op: replace
-        path: /spec/template/spec/source/kustomize/patches/0/patch
-        value: |-
-          - op: replace
-            path: /spec/source/targetRevision
-            value: dev

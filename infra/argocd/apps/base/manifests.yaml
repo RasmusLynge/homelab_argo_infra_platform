@@ -7,7 +7,6 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
   labels:
     component: argocd
-    git-source: "true"
 spec:
   project: infra
   source:
