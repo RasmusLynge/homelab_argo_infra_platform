@@ -1,0 +1,89 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack-helm
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    component: kube-prometheus-stack
+spec:
+  project: infra
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 88.6.3
+    helm:
+      releaseName: kube-prometheus-stack
+      valuesObject:
+        alertmanager:
+          enabled: false
+
+        grafana:
+          enabled: true
+          persistence:
+            enabled: false # using configmaps for dashboards
+          resources:
+            requests: { cpu: 50m, memory: 256Mi }
+            limits: { memory: 768Mi }
+          grafana.ini:
+            server:
+              root_url: https://grafana.home.yourdomain.com
+            auth.azuread:
+              enabled: true
+              name: Microsoft
+              allow_sign_up: true
+              scopes: openid email profile
+              auth_url: https://login.microsoftonline.com/$__env{AZURE_TENANT_ID}/oauth2/v2.0/authorize
+              token_url: https://login.microsoftonline.com/$__env{AZURE_TENANT_ID}/oauth2/v2.0/token
+              allowed_organizations: $__env{AZURE_TENANT_ID}
+              use_pkce: true
+              role_attribute_strict: true
+              allow_assign_grafana_admin: true
+              skip_org_role_sync: false
+          envValueFrom:
+            AZURE_TENANT_ID:
+              secretKeyRef:
+                name: grafana-ad-oidc
+                key: tenantId
+            GF_AUTH_AZUREAD_CLIENT_ID:
+              secretKeyRef:
+                name: grafana-ad-oidc
+                key: clientId
+            GF_AUTH_AZUREAD_CLIENT_SECRET:
+              secretKeyRef:
+                name: grafana-ad-oidc
+                key: clientSecret
+
+        # talos specific settings... setting up later
+        kubeControllerManager: { enabled: false }
+        kubeScheduler: { enabled: false }
+        kubeEtcd: { enabled: false }
+        kubeProxy: { enabled: false }
+
+        prometheus:
+          prometheusSpec:
+            scrapeInterval: 60s
+            evaluationInterval: 60s
+            retention: 10d
+            retentionSize: 8GB
+            resources:
+              requests: { memory: 400Mi }
+              limits: { memory: 1Gi }
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-prometheus-stack
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: baseline
+        pod-security.kubernetes.io/warn: baseline

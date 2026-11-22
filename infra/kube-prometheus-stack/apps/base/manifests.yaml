@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack-manifests
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    component: kube-prometheus-stack
+    
+spec:
+  project: infra
+  source:
+    repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
+    targetRevision: main
+    path: infra/kube-prometheus-stack/manifests/base
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-prometheus-stack
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

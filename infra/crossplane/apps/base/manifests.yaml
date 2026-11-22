@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane-manifests
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    component: crossplane
+    
+spec:
+  project: infra
+  source:
+    repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
+    targetRevision: main
+    path: infra/crossplane/manifests/base
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

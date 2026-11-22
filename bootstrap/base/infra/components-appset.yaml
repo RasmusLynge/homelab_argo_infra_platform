@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: infra-components
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  # One parent app per component folder. The parent renders the component's
+  # apps/ folder, which holds its child Applications (helm, crds, manifests).
+  generators:
+    - git:
+        repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
+        revision: main
+        directories:
+          - path: infra/*/apps/base
+  template:
+    metadata:
+      name: "{{index .path.segments 1}}"
+      labels:
+        component: "{{index .path.segments 1}}"
+    spec:
+      project: infra
+      source:
+        repoURL: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
+        targetRevision: main
+        path: "{{.path.path}}"
+        kustomize:
+          patches:
+            # Point every git-based child app at this environment's branch
+            - target: { kind: Application, labelSelector: git-source=true }
+              patch: |-
+                - op: replace
+                  path: /spec/source/targetRevision
+                  value: main
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

@@ -1,0 +1,62 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno-helm
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    component: kyverno
+spec:
+  project: infra
+  source:
+    repoURL: https://kyverno.github.io/kyverno/
+    chart: kyverno
+    targetRevision: 3.9.0
+    helm:
+      releaseName: kyverno
+      valuesObject:
+        crds:
+          annotations:
+            argocd.argoproj.io/sync-options: Replace=true
+          customLabels:
+            app.kubernetes.io/part-of: kyverno
+        grafana:
+          enabled: true
+        prometheusRule:
+          enabled: true
+        admissionController:
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: kube-prometheus-stack   # must match your kps Helm release name
+        backgroundController:
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: kube-prometheus-stack
+        reportsController:
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: kube-prometheus-stack
+        cleanupController:
+          serviceMonitor:
+            enabled: true
+            additionalLabels:
+              release: kube-prometheus-stack
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: baseline
+        pod-security.kubernetes.io/audit: baseline
+        pod-security.kubernetes.io/warn: baseline

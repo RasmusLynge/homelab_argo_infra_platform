@@ -1,2 +1,0 @@
-# charts pulled by `kustomize build --enable-helm`
-charts/

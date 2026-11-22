@@ -3,7 +3,5 @@ kind: Kustomization
 resources:
   - root-app.yaml
   - infra/app-project.yaml
-  - infra/crds-appset.yaml
-  - infra/helm-appset.yaml
-  - infra/manifests-appset.yaml
-  # - apps/app-project.yaml # some day...
+  - infra/components-appset.yaml
+  # - apps/app-project.yaml # todo...
