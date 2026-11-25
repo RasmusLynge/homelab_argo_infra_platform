@@ -9,6 +9,12 @@ operator:
     enabled: true
     labels:
       release: kube-prometheus-stack
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: kube-prometheus-stack
 
 # Using KubePrism through Talos
 kubeProxyReplacement: true
@@ -84,10 +90,3 @@ hubble:
     enabled: true  
     reasons:
       - policy_denied
-
-prometheus:
-  enabled: true
-  serviceMonitor:
-    enabled: true
-    labels:
-      release: kube-prometheus-stack
