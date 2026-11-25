@@ -84,7 +84,7 @@ hubble:
         release: kube-prometheus-stack   # must match your kube-prom-stack release name
     dashboards:
       enabled: true 
-      namespace: monitoring
+      namespace: kube-prometheus-stack # must match namespace of kube-prom-stack
 
   dropEventEmitter:
     enabled: true  
