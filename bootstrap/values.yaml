@@ -17,6 +17,8 @@ cluster:
 #   namespace:       where the chart is installed
 #   createNamespace: default true; false for namespaces the cluster owns (kube-system)
 #   podSecurity:     pod security level of the created namespace (baseline | privileged)
+#   gateways:        Gateways its namespace may attach routes to, e.g. [home]
+#                    (adds the label gateway-access/<name>: "true")
 #   chart:           Helm chart: repo, name, version, releaseName (default: the add-on name)
 #   git:             or a folder in another git repo: repo, path, version
 #   manifests:       true if addons/<name>/manifests/ has extra resources
@@ -123,6 +125,7 @@ addons:
     wave: 0
     namespace: argocd
     podSecurity: baseline
+    gateways: [home]
     chart:
       repo: https://argoproj.github.io/argo-helm
       name: argo-cd
@@ -134,6 +137,7 @@ addons:
     wave: 0
     namespace: monitoring
     podSecurity: privileged
+    gateways: [home]
     chart:
       repo: https://prometheus-community.github.io/helm-charts
       name: kube-prometheus-stack

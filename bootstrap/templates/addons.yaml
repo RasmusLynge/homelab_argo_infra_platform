@@ -56,12 +56,17 @@ spec:
       {{- end }}
       - ServerSideApply=true
       - SkipDryRunOnMissingResource=true   # CRDs from charts in the same sync
-    {{- if and $createNs $a.podSecurity }}
+    {{- if and $createNs (or $a.podSecurity $a.gateways) }}
     managedNamespaceMetadata:
       labels:
-        pod-security.kubernetes.io/enforce: {{ $a.podSecurity }}
+        {{- with $a.podSecurity }}
+        pod-security.kubernetes.io/enforce: {{ . }}
         pod-security.kubernetes.io/audit: baseline
         pod-security.kubernetes.io/warn: baseline
+        {{- end }}
+        {{- range $a.gateways }}
+        gateway-access/{{ . }}: "true"   # may attach routes to the {{ . }} Gateway
+        {{- end }}
     {{- end }}
     {{- include "retry" . | nindent 4 }}
 {{- end }}

@@ -16,8 +16,15 @@ spec:
         certificateRefs:
           - name: home-tls
       allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+        # Only namespaces labelled gateway-access/home: "true" may attach routes.
+        # Add-ons get the label with gateways: [home] in bootstrap/values.yaml.
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              gateway-access/home: "true"
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate

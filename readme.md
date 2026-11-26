@@ -83,6 +83,12 @@ Installed first, by their own add-ons:
 - `prometheus-operator-crds`: kube-prometheus-stack has `crds.enabled: false`.
   Keep it on the same operator version as kube-prometheus-stack.
 
+### Exposing an add-on through the Gateway
+The `home` Gateway only accepts HTTPRoutes from namespaces labelled `gateway-access/home: "true"`.
+Add `gateways: [home]` to the add-on's catalogue entry to give its namespace that label.
+Each Gateway has its own label (`gateway-access/<gateway name>`), so access is granted per Gateway.
+Kyverno's HTTPRoute policy additionally limits the hostnames routes may use.
+
 ### Adding an add-on
 1. `addons/<name>/values.yaml` (and `manifests/` if needed)
 2. An entry in the catalogue with the right wave
