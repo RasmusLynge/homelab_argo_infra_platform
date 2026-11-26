@@ -132,7 +132,7 @@ addons:
   # uses Crossplane, Kyverno, external-secrets and the gateway
   kube-prometheus-stack:
     wave: 0
-    namespace: kube-prometheus-stack
+    namespace: monitoring
     podSecurity: privileged
     chart:
       repo: https://prometheus-community.github.io/helm-charts

@@ -60,7 +60,7 @@ spec:
                 - cert-manager
                 - crossplane
                 - external-secrets
-                - kube-prometheus-stack
+                - monitoring
                 - tailscale
           - resources:
               selector:
@@ -86,10 +86,10 @@ spec:
               # through the Tailscale subnet router.
               - fromEntities:
                   - ingress
-              # Prometheus scraping (EDIT: namespace of kube-prometheus-stack)
+              # Prometheus scraping (kube-prometheus-stack runs in monitoring)
               - fromEndpoints:
                   - matchLabels:
-                      k8s:io.kubernetes.pod.namespace: kube-prometheus-stack
+                      k8s:io.kubernetes.pod.namespace: monitoring
             egress:
               # Pods in the same namespace
               - toEndpoints:

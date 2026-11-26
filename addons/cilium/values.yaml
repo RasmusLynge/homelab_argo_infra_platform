@@ -77,8 +77,7 @@ hubble:
       labels:
         release: kube-prometheus-stack # must match your kube-prom-stack release name
     dashboards:
-      enabled: true
-      namespace: monitoring
+      enabled: true   # Grafana picks up dashboards from every namespace
 
   dropEventEmitter:
     enabled: true
