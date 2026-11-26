@@ -1,0 +1,21 @@
+# The homelab cluster. Apply once to bootstrap:
+#   helm template root bootstrap -f clusters/home-dev/values.yaml | kubectl apply -f -
+cluster:
+  name: home-dev
+  environment: dev
+
+# Add-ons that run on this cluster. Pin a version here to try it before changing
+# the catalogue default, e.g.  cert-manager: { enabled: true, chart: { version: v1.22.0 } }
+# Cluster-only Helm values go in clusters/home-dev/addons/<name>.yaml.
+addons:
+  gateway-api-crds:          { enabled: true }
+  prometheus-operator-crds:  { enabled: true }
+  cilium:                    { enabled: true }
+  external-secrets:          { enabled: true }
+  kyverno:                   { enabled: true }
+  cert-manager:              { enabled: true }
+  crossplane:                { enabled: true }
+  gateway:                   { enabled: true }
+  tailscale:                 { enabled: true }
+  argocd:                    { enabled: true }
+  kube-prometheus-stack:     { enabled: true }

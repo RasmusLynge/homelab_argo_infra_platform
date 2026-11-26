@@ -1,0 +1,24 @@
+{{- $repos := list .Values.repo.url }}
+{{- range $name, $a := .Values.addons }}
+{{- with $a.chart }}{{ $repos = append $repos .repo }}{{ end }}
+{{- with $a.git }}{{ $repos = append $repos .repo }}{{ end }}
+{{- end }}
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ .Values.project }}
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"   # before every Application that uses it
+spec:
+  description: Cluster add-ons
+  sourceRepos:   # this repo + every repo in the add-on catalogue
+    {{- range uniq $repos }}
+    - {{ . }}
+    {{- end }}
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'

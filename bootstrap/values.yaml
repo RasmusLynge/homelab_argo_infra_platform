@@ -1,0 +1,141 @@
+# Platform repo: every Application points here, on this branch.
+repo:
+  url: git@github.com:RasmusLynge/homelab_argo_infra_platform.git
+  revision: main
+
+# AppProject used by the add-on Applications.
+project: infra
+
+# Set by clusters/<name>/values.yaml.
+cluster:
+  name: ""
+  environment: ""   # picks addons/<name>/values-<environment>.yaml and manifests/overlays/<environment>
+
+# The add-on catalogue: what each add-on is. A cluster enables the ones it runs.
+#
+#   wave:            sync wave; must be later than every add-on it depends on
+#   namespace:       where the chart is installed
+#   createNamespace: default true; false for namespaces the cluster owns (kube-system)
+#   podSecurity:     pod security level of the created namespace (baseline | privileged)
+#   chart:           Helm chart: repo, name, version, releaseName (default: the add-on name)
+#   git:             or a folder in another git repo: repo, path, version
+#   manifests:       true if addons/<name>/manifests/ has extra resources
+#
+# Values: addons/<name>/values.yaml, then values-<environment>.yaml, then
+# clusters/<cluster>/addons/<name>.yaml. Later files win; missing files are skipped.
+addons:
+  # Gateway API CRDs; Cilium needs them before it starts
+  gateway-api-crds:
+    wave: -10
+    namespace: kube-system
+    createNamespace: false
+    git:
+      repo: https://github.com/kubernetes-sigs/gateway-api.git
+      path: config/crd
+      version: v1.6.1
+
+  # ServiceMonitor, PrometheusRule, ... used by many charts. Keep on the same operator
+  # version as kube-prometheus-stack (31.0.1 = v0.93.1 = kube-prometheus-stack 88.6.3)
+  prometheus-operator-crds:
+    wave: -10
+    namespace: kube-system
+    createNamespace: false
+    chart:
+      repo: https://prometheus-community.github.io/helm-charts
+      name: prometheus-operator-crds
+      version: 31.0.1
+
+  # the network
+  cilium:
+    wave: -5
+    namespace: kube-system
+    createNamespace: false
+    chart:
+      repo: https://helm.cilium.io/
+      name: cilium
+      version: v1.20.1
+    manifests: true
+
+  # secrets for the add-ons after it
+  external-secrets:
+    wave: -3
+    namespace: external-secrets
+    podSecurity: baseline
+    chart:
+      repo: https://charts.external-secrets.io/
+      name: external-secrets
+      version: 2.10.0
+    manifests: true
+
+  # policies before most workloads
+  kyverno:
+    wave: -3
+    namespace: kyverno
+    podSecurity: baseline
+    chart:
+      repo: https://kyverno.github.io/kyverno/
+      name: kyverno
+      version: 3.9.0
+    manifests: true
+
+  # its ClusterIssuer uses an ExternalSecret
+  cert-manager:
+    wave: -2
+    namespace: cert-manager
+    podSecurity: baseline
+    chart:
+      repo: https://charts.jetstack.io
+      name: cert-manager
+      version: v1.21.0
+    manifests: true
+
+  # provides the EntraApplication API
+  crossplane:
+    wave: -2
+    namespace: crossplane
+    podSecurity: baseline
+    chart:
+      repo: https://charts.crossplane.io/stable
+      name: crossplane
+      version: 2.4.1
+    manifests: true
+
+  # the Gateway needs Cilium and a cert-manager Certificate
+  gateway:
+    wave: -1
+    namespace: gateway
+    podSecurity: baseline
+    manifests: true
+
+  # uses an ExternalSecret
+  tailscale:
+    wave: -1
+    namespace: tailscale
+    podSecurity: privileged
+    chart:
+      repo: https://pkgs.tailscale.com/helmcharts
+      name: tailscale-operator
+      version: 1.102.4
+    manifests: true
+
+  # HTTPRoute on the gateway, ExternalSecret
+  argocd:
+    wave: 0
+    namespace: argocd
+    podSecurity: baseline
+    chart:
+      repo: https://argoproj.github.io/argo-helm
+      name: argo-cd
+      version: 10.4.0
+    manifests: true
+
+  # uses Crossplane, Kyverno, external-secrets and the gateway
+  kube-prometheus-stack:
+    wave: 0
+    namespace: kube-prometheus-stack
+    podSecurity: privileged
+    chart:
+      repo: https://prometheus-community.github.io/helm-charts
+      name: kube-prometheus-stack
+      version: 88.6.3
+    manifests: true

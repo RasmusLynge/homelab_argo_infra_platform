@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - connector.yaml
+  - operator-oauth-secret.yaml
+# applied after the chart in the same Application is Healthy
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "1"

@@ -1,87 +1,107 @@
 # GitOps project for Talos homelab using ArgoCD
 
-## Deployment structure
-
-Everything is plain Kustomize: each folder Argo renders has a `base/` and one `overlays/<env>/` per environment.
-
-There is one branch, `main`. Every Application points at `main`; environments differ only by which `overlays/<env>` folders they use.
+## Structure
 
 ```
-bootstrap/
-├── base/
-│   ├── kustomization.yaml
-│   ├── root-app.yaml
-│   └── infra/
-│       ├── app-project.yaml
-│       └── components-appset.yaml   # one parent app per infra component
-└── overlays/
-    ├── dev/kustomization.yaml       # apps/overlays/dev
-    └── prod/kustomization.yaml      # apps/overlays/prod
+bootstrap/                       # Helm chart: root app, AppProject, one Application per add-on
+├── Chart.yaml
+├── values.yaml                  # the add-on catalogue
+└── templates/
+    ├── root-app.yaml
+    ├── app-project.yaml
+    └── addons.yaml
 
-infra/
-├── <component>/
-│   ├── apps/                        # the component's Argo Applications
-│   │   ├── base/
-│   │   │   ├── kustomization.yaml
-│   │   │   ├── helm.yaml            # <component>-helm: chart, version, valuesObject
-│   │   │   ├── crds.yaml            # <component>-crds (optional)
-│   │   │   └── manifests.yaml       # <component>-manifests (optional)
-│   │   └── overlays/dev/
-│   │       ├── kustomization.yaml   # points crds/manifests at their dev overlays
-│   │       └── values.yaml          # Helm values that differ in dev (optional)
-│   ├── crds/                        # optional: base/ + overlays/dev/
-│   └── manifests/                   # optional: base/ + overlays/dev/
-└── ...
+addons/
+└── <name>/
+    ├── values.yaml              # Helm values for every cluster
+    ├── values-<env>.yaml        # only what differs per environment (optional)
+    └── manifests/               # extra resources, Kustomize (optional)
+        ├── base/
+        └── overlays/<env>/
 
-apps/
-└── tbd...
+clusters/
+└── home-dev/
+    ├── values.yaml              # cluster name, environment, enabled add-ons, version pins
+    └── addons/<name>.yaml       # Helm values for this cluster only (optional)
 ```
 
-The cluster is bootstrapped with argocd and the root app: `kubectl apply -k bootstrap/overlays/<env>`.
-The root app then manages everything in `bootstrap/overlays/<env>`, including itself.
+There is one branch, `main`. Environments and clusters are folders and values files, never branches.
 
-The configuration is split into two categories:
-- infra - for the base infrastructure.
-- apps - for all the apps running on top. (tbd)
+## Bootstrapping a cluster
 
-### Infra
+1. Install Argo CD with Helm, using `addons/argocd/values.yaml` and `values-<env>.yaml`.
+2. Apply the root app once:
 
-```
-root
-└── infra-components             ApplicationSet
-    ├── cert-manager             parent app: infra/cert-manager/apps/overlays/dev
-    │   ├── cert-manager-helm        wave 0
-    │   └── cert-manager-manifests   wave 1
-    ├── gateway
-    │   ├── gateway-crds             wave -1
-    │   └── gateway-manifests        wave 1
-    └── ...
-```
+   ```
+   helm template root bootstrap -f clusters/home-dev/values.yaml | kubectl apply -f -
+   ```
 
-#### Application project
-`infra` is a pretty open project with close to no restrictions. It contains a whitelist of source repos.
+The root app renders `bootstrap/` with the cluster's values file, so from then on it manages itself,
+the AppProject and every add-on.
 
-#### Parent apps (`infra-components`)
-The ApplicationSet creates one parent app for every component that has an `apps/overlays/<env>` folder.
-A component runs in an environment when it has an overlay for it; adding a component is just adding the folder.
+## Add-ons
 
-The parent renders the component's `apps/` folder, which holds its child Applications.
+An add-on is a cluster-level component: Cilium, cert-manager, Kyverno and so on. Each is defined in three places:
 
-#### Child apps
-- `helm.yaml`: the Helm chart, rendered by Argo's native Helm. The values live in `spec.source.helm.valuesObject`.
-  Environment differences go in `apps/overlays/<env>/values.yaml`, a Kustomize patch that is merged into `valuesObject`.
-  Lists are replaced, not merged, just like Helm's own values files.
-- `crds.yaml` / `manifests.yaml`: plain Kustomize folders in this repo. The overlay points them at `crds/overlays/<env>` or `manifests/overlays/<env>`.
+1. **The catalogue** (`bootstrap/values.yaml`): what it is. Chart or git source, default version, namespace,
+   pod security level and sync wave.
+2. **Its folder** (`addons/<name>/`): how it is configured. Plain Helm values files plus optional manifests.
+3. **A cluster file** (`clusters/<cluster>/values.yaml`): whether it runs there, and optionally a pinned version.
 
-The parent syncs its children in sync waves (crds -1, helm 0, manifests 1), so e.g. a chart is healthy before the resources that need its CRDs or webhooks.
-This relies on the Application health check in `infra/argocd/apps/base/helm.yaml` (`resource.customizations.health.argoproj.io_Application`).
-Sync waves are not respected between components, because the parents are created by an ApplicationSet.
+The bootstrap chart renders one Application per enabled add-on. It can have up to three sources:
+- the Helm chart, with values from `addons/<name>/values.yaml`, then `values-<env>.yaml`, then
+  `clusters/<cluster>/addons/<name>.yaml` (later files win, missing files are skipped)
+- or a folder in another git repo (e.g. the Gateway API CRDs)
+- `addons/<name>/manifests/overlays/<env>`, for resources the chart doesn't create
 
-### Making changes
-Work on a short-lived branch and open a PR to `main`. A change in `base/` reaches every environment at once,
-so try risky changes in `overlays/dev` first and move them to `base/` (or `overlays/prod`) in a follow-up PR.
-To run different chart versions per environment, patch `spec/source/targetRevision` of `<component>-helm` in the overlay.
+### Ordering
+
+The root app syncs add-ons in sync waves and waits for each wave to be Healthy before the next:
+
+| Wave | Add-ons |
+|---|---|
+| -10 | `gateway-api-crds`, `prometheus-operator-crds` |
+| -5 | `cilium` |
+| -3 | `external-secrets`, `kyverno` |
+| -2 | `cert-manager`, `crossplane` |
+| -1 | `gateway`, `tailscale` |
+| 0 | `argocd`, `kube-prometheus-stack` |
+
+An add-on's wave must be later than every add-on it depends on. E.g. cert-manager's ClusterIssuer uses an
+ExternalSecret, so external-secrets comes first. An add-on that never gets Healthy stops later waves from updating.
+
+Inside an add-on, the manifests get `argocd.argoproj.io/sync-wave: "1"` (`commonAnnotations` in `manifests/base`),
+so they are applied after the chart is Healthy. Every Application retries failed syncs with backoff.
+
+Waves rely on the Application health check in `addons/argocd/values.yaml`
+(`resource.customizations.health.argoproj.io_Application`).
+
+### CRDs shared by several add-ons
+Installed first, by their own add-ons:
+- `gateway-api-crds`: straight from the upstream repo (`config/crd` at a release tag).
+  Check Cilium's supported Gateway API versions before bumping.
+- `prometheus-operator-crds`: kube-prometheus-stack has `crds.enabled: false`.
+  Keep it on the same operator version as kube-prometheus-stack.
+
+### Adding an add-on
+1. `addons/<name>/values.yaml` (and `manifests/` if needed)
+2. An entry in the catalogue with the right wave
+3. `<name>: { enabled: true }` in the cluster file
+
+### Upgrading and promoting
+Pin the new version in the cluster file first, e.g. `cert-manager: { enabled: true, chart: { version: v1.22.0 } }`.
+When it is healthy, move the version to the catalogue default (or to the next cluster's file).
+
+### Removing an add-on
+Remove it from the cluster file. The Application is deleted but, without a finalizer, its resources stay;
+delete them yourself. Be careful with add-ons that install CRDs: deleting a CRD deletes every resource of that kind.
+
+## Making changes
+Work on a short-lived branch and open a PR to `main`. A change in `addons/<name>/values.yaml` or the catalogue
+reaches every cluster at once, so try risky changes in a cluster file or `values-<env>.yaml` first.
 
 # tbd:
 - Apps
-- AppProjects per tier (bootstrap / infra / apps), lock down `default`
+- AppProjects per tier (bootstrap / platform / apps), lock down `default`
+- CI: render every cluster, kubeconform, Kyverno policies, diff on PRs
+- Renovate

@@ -1,0 +1,68 @@
+{{- $v := .Values }}
+{{- $cluster := required "cluster.name is required" $v.cluster.name }}
+{{- $env := required "cluster.environment is required" $v.cluster.environment }}
+{{- range $name, $a := $v.addons }}
+{{- if $a.enabled }}
+{{- $createNs := ternary $a.createNamespace true (hasKey $a "createNamespace") }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $name }}
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $a.wave | default 0 | quote }}
+  labels:
+    addon: {{ $name }}
+    cluster: {{ $cluster }}
+spec:
+  project: {{ $v.project }}
+  sources:
+    {{- with $a.chart }}
+    - repoURL: {{ .repo }}
+      chart: {{ .name }}
+      targetRevision: {{ .version | quote }}
+      helm:
+        releaseName: {{ .releaseName | default $name }}
+        ignoreMissingValueFiles: true
+        valueFiles:
+          - $values/addons/{{ $name }}/values.yaml
+          - $values/addons/{{ $name }}/values-{{ $env }}.yaml
+          - $values/clusters/{{ $cluster }}/addons/{{ $name }}.yaml
+    - repoURL: {{ $v.repo.url }}
+      targetRevision: {{ $v.repo.revision }}
+      ref: values
+    {{- end }}
+    {{- with $a.git }}
+    - repoURL: {{ .repo }}
+      targetRevision: {{ .version | quote }}
+      path: {{ .path }}
+    {{- end }}
+    {{- if $a.manifests }}
+    - repoURL: {{ $v.repo.url }}
+      targetRevision: {{ $v.repo.revision }}
+      path: addons/{{ $name }}/manifests/overlays/{{ $env }}
+    {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ $a.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      {{- if $createNs }}
+      - CreateNamespace=true
+      {{- end }}
+      - ServerSideApply=true
+      - SkipDryRunOnMissingResource=true   # CRDs from charts in the same sync
+    {{- if and $createNs $a.podSecurity }}
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: {{ $a.podSecurity }}
+        pod-security.kubernetes.io/audit: baseline
+        pod-security.kubernetes.io/warn: baseline
+    {{- end }}
+    {{- include "retry" . | nindent 4 }}
+{{- end }}
+{{- end }}

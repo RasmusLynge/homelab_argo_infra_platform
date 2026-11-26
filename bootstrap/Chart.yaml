@@ -1,0 +1,5 @@
+apiVersion: v2
+name: platform-bootstrap
+description: Renders the root app, the AppProject and one Argo CD Application per enabled add-on
+type: application
+version: 0.1.0
