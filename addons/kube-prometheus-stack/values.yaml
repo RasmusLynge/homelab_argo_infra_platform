@@ -57,3 +57,4 @@ prometheus:
       limits: { memory: 1Gi }
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false   # pick up every PrometheusRule

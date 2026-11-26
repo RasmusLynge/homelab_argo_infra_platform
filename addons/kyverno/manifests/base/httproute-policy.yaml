@@ -16,6 +16,9 @@ spec:
         operations:  ["CREATE", "UPDATE"]
         resources:   ["httproutes"]
   variables:
+    # Allowed hostname suffix; set per environment in manifests/overlays/<env>
+    - name: domain
+      expression: "'.yourdomain.com'"
     - name: hostnames
       expression: "object.spec.?hostnames.orValue([])"
     - name: parents
@@ -28,10 +31,10 @@ spec:
         spec.hostnames must be set. An HTTPRoute with no hostname matches
         every host on the Gateway.
 
-    - expression: "variables.hostnames.all(h, h.endsWith('.home.lynge.party'))"
-      message: >-
-        Every entry in spec.hostnames must be under .home.lynge.party
-        (for example app.home.lynge.party).
+    - expression: "variables.hostnames.all(h, h.endsWith(variables.domain))"
+      messageExpression: >-
+        'Every entry in spec.hostnames must be under ' + variables.domain +
+        ' (for example app' + variables.domain + ').'
 
     - expression: |
         variables.parents.all(p,

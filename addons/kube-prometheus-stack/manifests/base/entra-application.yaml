@@ -4,7 +4,7 @@ metadata:
   name: grafana
 spec:
   redirectUris:
-    - https://grafana.home.lynge.party/login/azuread
+    - https://grafana.yourdomain.com/login/azuread   # set per environment in manifests/overlays/<env>
   appRoles:
     - value: GrafanaAdmin
       displayName: Grafana Admin

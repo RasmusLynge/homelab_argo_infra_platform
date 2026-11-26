@@ -1,6 +1,4 @@
 crds:
-  annotations:
-    argocd.argoproj.io/sync-options: Replace=true
   customLabels:
     app.kubernetes.io/part-of: kyverno
 grafana:
@@ -10,20 +8,12 @@ prometheusRule:
 admissionController:
   serviceMonitor:
     enabled: true
-    additionalLabels:
-      release: kube-prometheus-stack   # must match your kps Helm release name
 backgroundController:
   serviceMonitor:
     enabled: true
-    additionalLabels:
-      release: kube-prometheus-stack
 reportsController:
   serviceMonitor:
     enabled: true
-    additionalLabels:
-      release: kube-prometheus-stack
 cleanupController:
   serviceMonitor:
     enabled: true
-    additionalLabels:
-      release: kube-prometheus-stack

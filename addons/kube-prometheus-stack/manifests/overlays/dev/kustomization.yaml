@@ -8,3 +8,8 @@ patches:
       - op: replace
         path: /spec/hostnames/0
         value: grafana.home.lynge.party
+  - target: { kind: EntraApplication, name: grafana }
+    patch: |-
+      - op: replace
+        path: /spec/redirectUris/0
+        value: https://grafana.home.lynge.party/login/azuread
