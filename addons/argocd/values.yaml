@@ -38,3 +38,30 @@ configs:
     policy.csv: |
       g, Admin, role:admin
       g, Reader, role:readonly
+
+# Metrics + ServiceMonitor for every Argo CD component
+controller:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+server:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+repoServer:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+applicationSet:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+notifications:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true

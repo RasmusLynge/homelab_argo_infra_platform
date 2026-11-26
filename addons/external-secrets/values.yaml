@@ -1,14 +1,6 @@
-crds:
-  enabled: true
+installCRDs: true
 
 replicaCount: 1
-
-global:
-  leaderElection:
-    namespace: cert-manager
-
-prometheus:
-  enabled: false
 
 resources:
   requests:
@@ -21,8 +13,12 @@ webhook:
       cpu: 10m
       memory: 32Mi
 
-cainjector:
+certController:
   resources:
     requests:
       cpu: 10m
-      memory: 128Mi
+      memory: 64Mi
+
+# ServiceMonitors for the controller, the webhook and the cert controller
+serviceMonitor:
+  enabled: true

@@ -8,7 +8,9 @@ global:
     namespace: cert-manager
 
 prometheus:
-  enabled: false
+  enabled: true
+  servicemonitor:
+    enabled: true
 
 resources:
   requests:
