@@ -6,8 +6,26 @@ spec:
   package: xpkg.upbound.io/upbound/provider-azuread:v2.5.0
 ---
 
-# az ad sp create-for-rbac --sdk-auth --role Owner --scopes /subscriptions/<Subscription ID> 
-# kubectl create secret generic azure-secret -n crossplane --from-file=creds=./cred.json
+# Credentials for the Entra ID provider:
+#
+# 1. Create service:
+#      az ad sp create-for-rbac --name crossplane-azuread \
+#        --query "{clientId: appId, clientSecret: password, tenantId: tenant}" > cred.json
+#
+# 2. Grant the roles to manage entra applications:
+#      APP_ID=$(jq -r .clientId cred.json)
+#      GRAPH=00000003-0000-0000-c000-000000000000cret as highly sensitive.
+#      for p in Application.ReadWrite.OwnedBy Group.Create AppRoleAssignment.ReadWrite.All Application.Read.All; do
+#        az ad app permission add --id "$APP_ID" --api $GRAPH \
+#          --api-permissions "$(az ad sp show --id $GRAPH --query "appRoles[?value=='$p'].id" -o tsv)=Role"
+#      done
+#      az ad app permission admin-consent --id "$APP_ID"
+#
+#    AppRoleAssignment.ReadWrite.All can grant any app role in the tenant, including
+#    Graph permissions, so treat this secret as highly sensitive.
+#
+# 3. Store it in a secret:
+#      kubectl create secret generic azure-secret -n crossplane-system --from-file=cred.json=./cred.json
 apiVersion: azuread.m.upbound.io/v1beta1
 metadata:
   name: default
@@ -16,6 +34,6 @@ spec:
   credentials:
     source: Secret
     secretRef:
-      namespace: crossplane
+      namespace: crossplane-system
       name: azure-secret
       key: cred.json

@@ -92,7 +92,7 @@ addons:
   # provides the EntraApplication API
   crossplane:
     wave: -2
-    namespace: crossplane
+    namespace: crossplane-system
     podSecurity: baseline
     chart:
       repo: https://charts.crossplane.io/stable

@@ -58,7 +58,7 @@ spec:
                 - kyverno
                 - argocd
                 - cert-manager
-                - crossplane
+                - crossplane-system
                 - external-secrets
                 - monitoring
                 - tailscale

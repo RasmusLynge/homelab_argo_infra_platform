@@ -6,7 +6,8 @@ configs:
     server.insecure: true # Using http-route with cert-manager
     controller.diff.server.side: true
   cm:
-    url: https://yourhostname.com   # set per environment in overlays/
+    url: https://yourhostname.com   # set per environment in values-<env>.yaml
+    # admin.enabled: false
     # Lets parent apps wait for their child Applications (sync waves)
     resource.customizations.health.argoproj.io_Application: |
       hs = {}
